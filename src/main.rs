@@ -1,22 +1,24 @@
 mod api;
+mod base;
 mod extractors;
 mod middlewares;
 mod types;
 
+use base::functions;
 use dotenv::dotenv;
-// use std::{fs::File, io::BufReader};
+use std::{fs::File, io::BufReader};
 // use actix_files::Files;
 use actix_web::{
-//    http::header::ContentType,
-//     http::header::HeaderValue,
-//    middleware, web,
+    //    http::header::ContentType,
+    //     http::header::HeaderValue,
+    //    middleware, web,
     App,
-//     HttpRequest, HttpResponse,
+    //     HttpRequest, HttpResponse,
     HttpServer,
 };
 use log::info;
-// use rustls::{Certificate, PrivateKey, ServerConfig};
-// use rustls_pemfile::{certs, pkcs8_private_keys};
+use rustls::{Certificate, PrivateKey, ServerConfig};
+use rustls_pemfile::{certs, pkcs8_private_keys};
 
 // /// simple handle
 // async fn index(req: HttpRequest) -> HttpResponse {
@@ -33,10 +35,16 @@ use log::info;
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
     env_logger::init();
-    info!("Start rabp api webserver: Rust Actix Budget Program");
     let config = types::Config::default();
+    let serverconfig = load_rustls_config(&config);
+    let info = format!(
+        "Starting rabp api webserver Rust Actix Budget Program at http{}://localhost:{}",
+        functions::iif(serverconfig.is_some(), "s", ""),
+        config.port
+    );
+    info!("{}", info);
     let auth0_config = extractors::Auth0Config::default();
-    HttpServer::new(move || {
+    let s = HttpServer::new(move || {
         App::new()
             .app_data(auth0_config.clone())
             .wrap(middlewares::cors(&config.client_origin_url))
@@ -45,61 +53,46 @@ async fn main() -> std::io::Result<()> {
             .wrap(middlewares::logger())
             .service(api::routes())
     })
-    .bind((config.host, config.port))?
-    .workers(2)
-    .run()
-    .await
+    .workers(2);
+    if let Some(sc) = serverconfig {
+        s.bind_rustls_021(format!("{}:{}", config.host, config.port), sc)?
+            .run()
+            .await
+    } else {
+        s.bind((config.host, config.port))?.run().await
+    }
 }
 
-// #[actix_web::main]
-// async fn mainxxx() -> std::io::Result<()> {
-//     env_logger::init_from_env(env_logger::Env::default().default_filter_or("info"));
+fn load_rustls_config(conf: &types::Config) -> Option<rustls::ServerConfig> {
+    // init server config builder with safe defaults
+    let config = ServerConfig::builder()
+        .with_safe_defaults()
+        .with_no_client_auth();
+    if conf.tls_certs.len() <= 0 || conf.tls_key.len() <= 0 {
+        return None;
+    }
 
-//     let config = load_rustls_config();
+    // load TLS key/cert files
+    let cert_file = &mut BufReader::new(File::open(conf.tls_certs.as_str()).unwrap());
+    let key_file = &mut BufReader::new(File::open(conf.tls_key.as_str()).unwrap());
 
-//     log::info!("starting HTTPS server at https://localhost:8443");
+    // convert files to key/cert objects
+    let cert_chain = certs(cert_file)
+        .unwrap()
+        .into_iter()
+        .map(Certificate)
+        .collect();
+    let mut keys: Vec<PrivateKey> = pkcs8_private_keys(key_file)
+        .unwrap()
+        .into_iter()
+        .map(PrivateKey)
+        .collect();
 
-//     HttpServer::new(|| {
-//         App::new()
-//             // enable logger
-//             .wrap(middleware::Logger::default())
-//             // register simple handler, handle all methods
-//             .service(web::resource("/index.html").to(index))
-//             .service(web::redirect("/", "/index.html"))
-//             .service(Files::new("/static", "static"))
-//     })
-//     .bind_rustls_021("127.0.0.1:8443", config)?
-//     .run()
-//     .await
-// }
+    // exit if no keys could be parsed
+    if keys.is_empty() {
+        eprintln!("Could not locate PKCS 8 private keys.");
+        std::process::exit(1);
+    }
 
-// fn load_rustls_config() -> rustls::ServerConfig {
-//     // init server config builder with safe defaults
-//     let config = ServerConfig::builder()
-//         .with_safe_defaults()
-//         .with_no_client_auth();
-
-//     // load TLS key/cert files
-//     let cert_file = &mut BufReader::new(File::open("cert.pem").unwrap());
-//     let key_file = &mut BufReader::new(File::open("key.pem").unwrap());
-
-//     // convert files to key/cert objects
-//     let cert_chain = certs(cert_file)
-//         .unwrap()
-//         .into_iter()
-//         .map(Certificate)
-//         .collect();
-//     let mut keys: Vec<PrivateKey> = pkcs8_private_keys(key_file)
-//         .unwrap()
-//         .into_iter()
-//         .map(PrivateKey)
-//         .collect();
-
-//     // exit if no keys could be parsed
-//     if keys.is_empty() {
-//         eprintln!("Could not locate PKCS 8 private keys.");
-//         std::process::exit(1);
-//     }
-
-//     config.with_single_cert(cert_chain, keys.remove(0)).unwrap()
-// }
+    Some(config.with_single_cert(cert_chain, keys.remove(0)).unwrap())
+}

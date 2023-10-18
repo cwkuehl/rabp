@@ -1,5 +1,5 @@
 use super::types::{Message, Metadata};
-use crate::{extractors::Claims, types::ErrorMessage};
+use crate::{base::functions, extractors::Claims, types::ErrorMessage};
 use actix_web::{get, web, HttpResponse, Responder};
 use std::collections::HashSet;
 
@@ -36,6 +36,8 @@ pub async fn protected(_claims: Claims) -> impl Responder {
 
 #[get("/public")]
 pub async fn public() -> impl Responder {
+    functions::mach_nichts();
+    functions::to_i32("123");
     web::Json(Message {
         metadata: Metadata {
             api: "api_actix-web_rust_hello-world".to_string(),
