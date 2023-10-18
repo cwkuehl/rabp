@@ -1,0 +1,28 @@
+[package]
+name = "rabp"
+version = "0.1.0"
+authors = ["Wolfgang Kuehl <wolfgang@cwkuehl.de>"]
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[profile]
+dev = { opt-level = 0, debuginfo = 2, panic = "unwind" }
+release = { opt-level = 3, panic = "abort" }
+
+[dependencies]
+rep = { path = "./rep" }
+actix-cors = "0.6"
+actix-files = "0.6"
+actix-web = { version = "4" , features = ["rustls-0_21"] }
+actix-web-httpauth = "0.8"
+awc = { version = "3.2", features = ["openssl"] }
+derive_more = "0.99"
+dotenv = "0.15"
+env_logger = "0.10"
+envy = "0.4"
+jsonwebtoken = "8.0"
+log = "0.4"
+rustls = "0.21"
+serde = "1.0"
+serde_json = "1.0"
