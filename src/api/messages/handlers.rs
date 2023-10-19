@@ -5,7 +5,7 @@ use std::collections::HashSet;
 
 #[get("/admin")]
 pub async fn admin(claims: Claims) -> impl Responder {
-    if claims.validate_permissions(&HashSet::from(["read:admin-messagesxxx".to_string()])) {
+    if claims.validate_permissions(&HashSet::from(["read:admin-messages".to_string()])) {
         HttpResponse::Ok().json(Message {
             metadata: Metadata {
                 api: "api_actix-web_rust_hello-world".to_string(),
