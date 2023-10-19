@@ -18,12 +18,11 @@ use actix_web::{
     HttpServer,
 };
 use log::{info, LevelFilter};
-use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
 use rustls::{Certificate, PrivateKey, ServerConfig};
 use rustls_pemfile::{certs, pkcs8_private_keys};
 
-type DbPool = Pool<SqliteConnectionManager>;
+// type DbPool = Pool<SqliteConnectionManager>;
 
 // /// simple handle
 // async fn index(req: HttpRequest) -> HttpResponse {
