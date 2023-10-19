@@ -16,7 +16,7 @@ use actix_web::{
     //     HttpRequest, HttpResponse,
     HttpServer,
 };
-use log::info;
+use log::{info, LevelFilter};
 use rustls::{Certificate, PrivateKey, ServerConfig};
 use rustls_pemfile::{certs, pkcs8_private_keys};
 
@@ -34,7 +34,9 @@ use rustls_pemfile::{certs, pkcs8_private_keys};
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
-    env_logger::init();
+    env_logger::builder()
+        .filter_module("rustls", LevelFilter::Warn)
+        .init();
     let config = types::Config::default();
     let serverconfig = load_rustls_config(&config);
     let info = format!(
@@ -52,6 +54,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(middlewares::security_headers())
             .wrap(middlewares::logger())
             .service(api::routes())
+            .wrap(middlewares::SayHi)
     })
     .workers(2);
     if let Some(sc) = serverconfig {
