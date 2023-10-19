@@ -3,14 +3,13 @@ use actix_web::{
     dev::ServiceResponse,
     http::{header, StatusCode},
     middleware::{ErrorHandlerResponse, ErrorHandlers},
-    // HttpResponse,
     Result,
 };
 
 pub fn err_handlers<B: 'static>() -> ErrorHandlers<B> {
     ErrorHandlers::new()
-         .handler(StatusCode::INTERNAL_SERVER_ERROR, internal_error)
-         .handler(StatusCode::NOT_FOUND, not_found)
+        .handler(StatusCode::INTERNAL_SERVER_ERROR, internal_error)
+        .handler(StatusCode::NOT_FOUND, not_found)
 }
 
 fn internal_error<B>(mut res: ServiceResponse<B>) -> Result<ErrorHandlerResponse<B>> {
@@ -27,7 +26,8 @@ fn internal_error<B>(mut res: ServiceResponse<B>) -> Result<ErrorHandlerResponse
         error: None,
         error_description: None,
         message: "Internal Server Error".to_string(),
-    }).unwrap_or_else(|_| "{\"message\":\"Internal server error\"}".to_string());
+    })
+    .unwrap_or_else(|_| "{\"message\":\"Internal server error\"}".to_string());
     let res = res.set_body(http_res);
 
     // modified bodies need to be boxed and placed in the "right" slot
@@ -51,7 +51,8 @@ fn not_found<B>(mut res: ServiceResponse<B>) -> Result<ErrorHandlerResponse<B>> 
         error: None,
         error_description: None,
         message: "Not Found".to_string(),
-    }).unwrap_or_else(|_| "{\"message\":\"Not found\"}".to_string());
+    })
+    .unwrap_or_else(|_| "{\"message\":\"Not found\"}".to_string());
     let res = res.set_body(http_res);
 
     // modified bodies need to be boxed and placed in the "right" slot
