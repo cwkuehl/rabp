@@ -10,6 +10,7 @@ pub struct Config {
     pub tls_certs: String,
     #[serde(default = "default_tls_key")]
     pub tls_key: String,
+    pub sqlite_db: String,
 }
 
 fn default_host() -> String {

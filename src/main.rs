@@ -11,14 +11,19 @@ use std::{fs::File, io::BufReader};
 use actix_web::{
     //    http::header::ContentType,
     //     http::header::HeaderValue,
-    //    middleware, web,
+    //    middleware,
+    web,
     App,
     //     HttpRequest, HttpResponse,
     HttpServer,
 };
 use log::{info, LevelFilter};
+use r2d2::Pool;
+use r2d2_sqlite::SqliteConnectionManager;
 use rustls::{Certificate, PrivateKey, ServerConfig};
 use rustls_pemfile::{certs, pkcs8_private_keys};
+
+type DbPool = Pool<SqliteConnectionManager>;
 
 // /// simple handle
 // async fn index(req: HttpRequest) -> HttpResponse {
@@ -40,15 +45,20 @@ async fn main() -> std::io::Result<()> {
     let config = types::Config::default();
     let serverconfig = load_rustls_config(&config);
     let info = format!(
-        "Starting rabp api webserver Rust Actix Budget Program at http{}://localhost:{}",
+        "Starting rabp api webserver Rust Actix Budget Program at http{}://localhost:{} with sqlite db at {}",
         functions::iif(serverconfig.is_some(), "s", ""),
-        config.port
+        config.port, config.sqlite_db
     );
     info!("{}", info);
     let auth0_config = extractors::Auth0Config::default();
+    let manager = SqliteConnectionManager::file(config.sqlite_db.clone());
+    let pool = r2d2::Pool::builder()
+        .build(manager)
+        .expect("database URL should be valid path to SQLite DB file");
     let s = HttpServer::new(move || {
         App::new()
             .app_data(auth0_config.clone())
+            .app_data(web::Data::new(pool.clone()))
             .wrap(middlewares::cors(&config.client_origin_url))
             .wrap(middlewares::err_handlers())
             .wrap(middlewares::security_headers())
