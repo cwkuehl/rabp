@@ -1,4 +1,4 @@
-use diesel::{table, allow_tables_to_appear_in_same_query};
+use diesel::{allow_tables_to_appear_in_same_query, table};
 
 table! {
     use diesel::sql_types::*;
@@ -91,6 +91,7 @@ table! {
 table! {
     use diesel::sql_types::*;
     #[allow(non_snake_case)]
+    //#[sql_name = "Benutzerxxx"]
     BENUTZER (mandant_nr, benutzer_id) {
         mandant_nr -> Integer,
         benutzer_id -> Text,
@@ -645,39 +646,39 @@ table! {
 }
 
 allow_tables_to_appear_in_same_query!(
-AD_ADRESSE,
-AD_PERSON,
-AD_SITZ,
-AG_DIALOG,
-BENUTZER,
-BYTE_DATEN,
-FZ_BUCH,
-FZ_BUCHAUTOR,
-FZ_BUCHSERIE,
-FZ_BUCHSTATUS,
-FZ_FAHRRAD,
-FZ_FAHRRADSTAND,
-FZ_NOTIZ,
-HH_BILANZ,
-HH_BUCHUNG,
-HH_EREIGNIS,
-HH_KONTO,
-HH_PERIODE,
-MA_MANDANT,
-MA_PARAMETER,
-SB_EREIGNIS,
-SB_FAMILIE,
-SB_KIND,
-SB_PERSON,
-SB_QUELLE,
-SO_KURSE,
-TB_EINTRAG,
-TB_EINTRAG_ORT,
-TB_ORT,
-TB_WETTER,
-WP_ANLAGE,
-WP_BUCHUNG,
-WP_KONFIGURATION,
-WP_STAND,
-WP_WERTPAPIER,
+    AD_ADRESSE,
+    AD_PERSON,
+    AD_SITZ,
+    AG_DIALOG,
+    BENUTZER,
+    BYTE_DATEN,
+    FZ_BUCH,
+    FZ_BUCHAUTOR,
+    FZ_BUCHSERIE,
+    FZ_BUCHSTATUS,
+    FZ_FAHRRAD,
+    FZ_FAHRRADSTAND,
+    FZ_NOTIZ,
+    HH_BILANZ,
+    HH_BUCHUNG,
+    HH_EREIGNIS,
+    HH_KONTO,
+    HH_PERIODE,
+    MA_MANDANT,
+    MA_PARAMETER,
+    SB_EREIGNIS,
+    SB_FAMILIE,
+    SB_KIND,
+    SB_PERSON,
+    SB_QUELLE,
+    SO_KURSE,
+    TB_EINTRAG,
+    TB_EINTRAG_ORT,
+    TB_ORT,
+    TB_WETTER,
+    WP_ANLAGE,
+    WP_BUCHUNG,
+    WP_KONFIGURATION,
+    WP_STAND,
+    WP_WERTPAPIER,
 );

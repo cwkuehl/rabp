@@ -2,6 +2,7 @@ mod api;
 mod base;
 mod extractors;
 mod middlewares;
+mod reps;
 mod types;
 
 use base::functions;
@@ -18,7 +19,7 @@ use actix_web::{
     HttpServer,
 };
 use log::{info, LevelFilter};
-use r2d2_sqlite::SqliteConnectionManager;
+//use r2d2_sqlite::SqliteConnectionManager;
 use rustls::{Certificate, PrivateKey, ServerConfig};
 use rustls_pemfile::{certs, pkcs8_private_keys};
 
@@ -50,8 +51,11 @@ async fn main() -> std::io::Result<()> {
     );
     info!("{}", info);
     let auth0_config = extractors::Auth0Config::default();
-    let manager = SqliteConnectionManager::file(config.sqlite_db.clone());
-    let pool = r2d2::Pool::builder()
+    let manager =
+        diesel::r2d2::ConnectionManager::<diesel::SqliteConnection>::new(config.sqlite_db.clone());
+    let pool = diesel::r2d2::Pool::builder()
+        .max_size(3)
+        .test_on_check_out(true)
         .build(manager)
         .expect("database URL should be valid path to SQLite DB file");
     let s = HttpServer::new(move || {
