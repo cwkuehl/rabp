@@ -46,12 +46,20 @@ pub async fn list(pool: web::Data<DbPool>) -> impl Responder {
     let mut conn = pool.get().unwrap();
     let list = crate::reps::benutzer::get_all(&mut conn, 1);
     match list {
-      Ok(list) => HttpResponse::Ok().json(list),
-      Err(e) => HttpResponse::NotImplemented().json(ErrorMessage {
-          error: None,
-          error_description: None,
-          message: e.to_string(),
-      }),
+        Ok(list) => {
+            let mut ben = Vec::new();
+            for b in list {
+                let mut bc = b.clone();
+                bc.passwort = Some("xxx".to_string());
+                ben.push(bc);
+            }
+            HttpResponse::Ok().json(ben)
+        }
+        Err(e) => HttpResponse::NotImplemented().json(ErrorMessage {
+            error: Some("DB Error".to_string()),
+            error_description: Some(e.to_string()),
+            message: "Internal Server Error".to_string(),
+        }),
     }
     // if let Ok(list) = list {
     //     return HttpResponse::Ok().json(list);
