@@ -44,7 +44,7 @@ Versioning: update with PATCH instead of PUT
 pub async fn list(pool: web::Data<DbPool>) -> impl Responder {
     functions::mach_nichts();
     let mut conn = pool.get().unwrap();
-    let list = crate::reps::benutzer::get_all(&mut conn, 1);
+    let list = crate::services::reps::benutzer::get_all(&mut conn, 1);
     match list {
         Ok(list) => {
             let mut ben = Vec::new();
