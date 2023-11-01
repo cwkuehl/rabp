@@ -6,7 +6,7 @@ use rep::models::Benutzer;
 use rep::schema::BENUTZER;
 
 // TODO: async
-// https://docs.rs/diesel-async/latest/diesel_async/pooled_connection/deadpool/index.html
+// https://docs.rs/diesel-async/latest/diesel_async/pooled_connection/deadpool/index.html (not for sqlite)
 // pub async fn get_all_async(con: &DbCon) -> Result<Vec<Benutzer>, Error> {
 //     let result = con.run(|c| BENUTZER::table.load::<Benutzer>(c)).await;
 //     return result;

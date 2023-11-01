@@ -42,13 +42,13 @@ mod tests {
             println!("{}", sb);
         } else if self::mach_nichts() == 0 {
             std::fs::write(
-                "/home/wolfgang/rust/rrbp/rep/src/schema.rs",
+                "/home/wolfgang/rust/rabp/rep/src/schema.rs",
                 create_schema(&t),
             )
             .unwrap();
             //} else if self::mach_nichts() == 1 {
             std::fs::write(
-                "/home/wolfgang/rust/rrbp/rep/src/models.rs",
+                "/home/wolfgang/rust/rabp/rep/src/models.rs",
                 create_models(&t),
             )
             .unwrap();

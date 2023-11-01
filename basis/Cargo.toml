@@ -1,0 +1,12 @@
+[package]
+name = "basis"
+version = "0.1.0"
+authors = ["Wolfgang Kuehl <wolfgang@cwkuehl.de>"]
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+chrono = { version = "*", features = ["serde"] }
+
+[dev-dependencies]

@@ -11,12 +11,14 @@ dev = { opt-level = 0, debuginfo = 2, panic = "unwind" }
 release = { opt-level = 3, panic = "abort" }
 
 [dependencies]
+basis = { path = "./basis" }
 rep = { path = "./rep" }
 actix-cors = "0.6"
 actix-files = "0.6"
 actix-web = { version = "4" , features = ["rustls-0_21"] }
 actix-web-httpauth = "0.8"
 awc = { version = "3.2", features = ["openssl"] }
+chrono = "0.4"
 derive_more = "0.99"
 diesel = { version = "2.1", features = ["sqlite", "chrono", "r2d2"] }
 #diesel-async = { version = "0.4", features = ["sqlite"] }

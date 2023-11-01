@@ -1,5 +1,6 @@
 use super::types::{Message, Metadata};
-use crate::{base::functions, extractors::Claims, types::ErrorMessage};
+use crate::{extractors::Claims, types::ErrorMessage};
+use basis::functions;
 use actix_web::{get, web, HttpResponse, Responder};
 use std::collections::HashSet;
 

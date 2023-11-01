@@ -5,7 +5,7 @@ mod middlewares;
 mod services;
 mod types;
 
-use base::functions;
+use basis::functions;
 use dotenv::dotenv;
 use std::{fs::File, io::BufReader};
 // use actix_files::Files;

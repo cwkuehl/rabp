@@ -1,5 +1,6 @@
-use crate::{base::functions, extractors::Claims, types::ErrorMessage};
+use crate::{extractors::Claims, types::ErrorMessage};
 use actix_web::{get, web, HttpResponse, Responder};
+use basis::functions;
 //use r2d2::Pool;
 //use r2d2_sqlite::SqliteConnectionManager;
 use diesel::r2d2::ConnectionManager;
