@@ -1302,6 +1302,7 @@ dependencies = [
  "rustls-pemfile",
  "serde",
  "serde_json",
+ "service",
 ]
 
 [[package]]
@@ -1546,6 +1547,17 @@ dependencies = [
  "form_urlencoded",
  "itoa",
  "ryu",
+ "serde",
+]
+
+[[package]]
+name = "service"
+version = "0.1.0"
+dependencies = [
+ "basis",
+ "chrono",
+ "diesel",
+ "rep",
  "serde",
 ]
 

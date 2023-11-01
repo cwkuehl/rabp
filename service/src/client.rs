@@ -1,6 +1,6 @@
 use crate::base::errors::Result;
 use crate::base::service::ServiceDaten;
-use crate::services::reps;
+use crate::reps;
 use rep::models::Benutzer;
 
 /// Get list with users.

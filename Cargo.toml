@@ -13,6 +13,7 @@ release = { opt-level = 3, panic = "abort" }
 [dependencies]
 basis = { path = "./basis" }
 rep = { path = "./rep" }
+service = { path = "./service" }
 actix-cors = "0.6"
 actix-files = "0.6"
 actix-web = { version = "4" , features = ["rustls-0_21"] }
