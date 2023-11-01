@@ -112,3 +112,11 @@ fn load_rustls_config(conf: &types::Config) -> Option<rustls::ServerConfig> {
 
     Some(config.with_single_cert(cert_chain, keys.remove(0)).unwrap())
 }
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn it_works() {
+        assert_eq!(2 + 2, 4);
+    }
+}

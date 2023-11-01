@@ -18,12 +18,12 @@ mod tests {
         columns: Vec<Column>,
     }
 
-    /// Generieren aller Dateien für Repositories.
+    /// Generates all files for repositories.
     #[test]
     fn generate_reps() {
         let mut tables: Vec<Table> = Vec::new();
         read_tables(&mut tables);
-        // Dateien generieren
+        // Generates files.
         let t = tables
             .iter()
             .filter(|a| {
@@ -55,7 +55,7 @@ mod tests {
         }
     }
 
-    /// Repositories zusammenstellen.
+    /// Generates repositories.
     fn create_reps(tables: &Vec<&Table>) -> String {
         let mut sb = String::new();
         for t in tables.iter() {
@@ -509,7 +509,7 @@ pub fn delete(db: &mut DbContext, b: &{}) -> Result<()> {{
         sb
     }
 
-    /// UndoEntry zusammenstellen.
+    /// Generate UndoEntry.
     fn create_undo_entry(tables: &Vec<&Table>) -> String {
         let mut sb = String::new();
         let j = tables
@@ -608,9 +608,9 @@ impl UndoEntry {
         sb
     }
 
-    /// Datei schema.rs zusammenstellen.
+    /// Generates file schema.rs.
     fn create_schema(tables: &Vec<&Table>) -> String {
-        let mut sb = r#"use diesel::{table, allow_tables_to_appear_in_same_query};
+        let mut sb = r#"use diesel::{allow_tables_to_appear_in_same_query, table};
 "#
         .to_string();
         for t in tables.iter() {
@@ -676,7 +676,7 @@ allow_tables_to_appear_in_same_query!("#,
         sb
     }
 
-    /// Datei models.rs zusammenstellen.
+    /// Generates file models.rs.
     fn create_models(tables: &Vec<&Table>) -> String {
         let j = tables
             .iter()
@@ -756,7 +756,7 @@ impl Clone for {} {{
 "#,
             );
 
-            // PartialEq, Vergleich ohne Revisionsdaten
+            // PartialEq, comparison without Revision
             sb.push_str(
                 format!(
                     r#"
@@ -826,7 +826,7 @@ impl Revision for {} {{
         sb.to_string()
     }
 
-    /// Liefert den diesel-Typ einer Spalte.
+    /// Returns diesel type of column.
     fn get_diesel_type(c: &Column) -> String {
         let t = match c.type_.as_str() {
             "INTEGER" => "Integer",
@@ -844,7 +844,7 @@ impl Revision for {} {{
         t.to_string()
     }
 
-    /// Liefert den rust-Typ einer Spalte.
+    /// Returns rust type of column.
     fn get_rust_type(c: &Column) -> String {
         let t = match c.type_.as_str() {
             "INTEGER" => "i32",
@@ -865,7 +865,7 @@ impl Revision for {} {{
         t.to_string()
     }
 
-    /// Liefert die clone-Funktion einer Spalte.
+    /// Returns clone function of column.
     fn get_rust_type_clone(c: &Column) -> String {
         let t = match c.type_.as_str() {
             "INTEGER" => "",
@@ -880,7 +880,7 @@ impl Revision for {} {{
         t.to_string()
     }
 
-    /// Liefert die as_ref-Funktion einer Spalte.
+    /// Returns as_ref function of column.
     fn get_rust_type_as_ref(c: &Column) -> String {
         let t = match c.type_.as_str() {
             "INTEGER" => "",
@@ -895,9 +895,9 @@ impl Revision for {} {{
         t.to_string()
     }
 
-    /// Lesen der Datei tables.xml.
+    /// Reads file tables.xml.
     fn read_tables(tables: &mut Vec<Table>) {
-        let tables_src = include_str!("/home/wolfgang/cs/csbp//CSBP/Resources/Tables.xml");
+        let tables_src = include_str!("/home/wolfgang/cs/csbp/CSBP/Resources/Tables.xml");
         let mut reader = Reader::from_str(tables_src);
         reader.trim_text(true);
 
