@@ -1,8 +1,6 @@
 mod api;
-mod base;
 mod extractors;
 mod middlewares;
-// mod services; // TODO remove
 mod types;
 
 use basis::functions;

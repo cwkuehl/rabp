@@ -29,6 +29,14 @@ pub async fn listxxx(claims: Claims, _pool: web::Data<DbPool>) -> impl Responder
     }
 }
 
+fn db_em(err: &str, desc: String) -> ErrorMessage {
+    ErrorMessage {
+        error: Some(err.to_string()),
+        error_description: Some(desc.to_string()),
+        message: "Internal Server Error".to_string(),
+    }
+}
+
 /*
 apigee concept:
 GET (read), DELETE (delete), POST (create), PUT or PATCH (update)
@@ -44,8 +52,14 @@ Versioning: update with PATCH instead of PUT
 #[get("")]
 pub async fn list(pool: web::Data<DbPool>) -> impl Responder {
     functions::mach_nichts();
-    let mut conn = pool.get().unwrap();
-    let list = service::reps::benutzer::get_all(&mut conn, 1);
+    let conn = pool.get();
+    if let Err(e) = conn {
+        return HttpResponse::NotImplemented().json(db_em("DB Connection Error", e.to_string()));
+    }
+    let mut conn = conn.unwrap();
+    let mut daten = service::ServiceData::new(&mut conn, 1, "test");
+    let list = service::client::get_user_list(&mut daten);
+    //let list = service::reps::benutzer::get_all(&mut conn, 1);
     match list {
         Ok(list) => {
             let mut ben = Vec::new();
@@ -56,27 +70,6 @@ pub async fn list(pool: web::Data<DbPool>) -> impl Responder {
             }
             HttpResponse::Ok().json(ben)
         }
-        Err(e) => HttpResponse::NotImplemented().json(ErrorMessage {
-            error: Some("DB Error".to_string()),
-            error_description: Some(e.to_string()),
-            message: "Internal Server Error".to_string(),
-        }),
+        Err(e) => HttpResponse::NotImplemented().json(db_em("DB Error", e.to_string())),
     }
-    // if let Ok(list) = list {
-    //     return HttpResponse::Ok().json(list);
-    // } else {
-    //     return HttpResponse::NotImplemented().json(ErrorMessage {
-    //         error: None,
-    //         error_description: None,
-    //         message: "DB Error".to_string(),
-    //     });
-    // }
-
-    //let mut stmt = conn.prepare("SELECT * FROM Benutzer").unwrap();
-    //let rows = stmt.query([]).unwrap();
-    // HttpResponse::ImATeapot().json(ErrorMessage {
-    //     error: None,
-    //     error_description: None,
-    //     message: "Users OK".to_string(),
-    // })
 }

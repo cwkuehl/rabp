@@ -1,3 +1,4 @@
 mod base;
+pub use base::service::ServiceData;
 pub mod client;
-pub mod reps; // TODO private
+mod reps;
