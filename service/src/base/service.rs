@@ -1,9 +1,11 @@
 //use crate::{config::RsbpConfig, res};
 use super::enums::RabpLocale;
 use chrono::{DateTime, Local, NaiveDate, Timelike};
+use derive_debug::Dbg;
 
-//#[derive(Debug, Clone)] // TODO derive_debug
+#[derive(Dbg)]
 pub struct ServiceData<'a> {
+    #[dbg(placeholder = "...")]
     pub conn: &'a mut diesel::SqliteConnection,
     pub mandant_nr: i32,
     pub benutzer_id: String,

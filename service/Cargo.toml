@@ -9,6 +9,7 @@ edition = "2021"
 [dependencies]
 basis = { path = "../basis" }
 rep = { path = "../rep" }
+derive-debug = "0.1"
 diesel = { version = "*", features = ["sqlite", "chrono"] }
 serde = { version = "*", features = ["derive"] }
 chrono = { version = "*", features = ["serde"] }
