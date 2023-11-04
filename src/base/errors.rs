@@ -31,8 +31,16 @@ impl std::fmt::Display for BpError {
 impl error::ResponseError for BpError {
     fn error_response(&self) -> HttpResponse {
         HttpResponse::build(self.status_code())
-            .insert_header(ContentType::html())
-            .body(self.to_string())
+            .insert_header(ContentType::json())
+            //.body(self.to_string())
+            .body(
+                serde_json::to_string(&crate::types::ErrorMessage {
+                    error: Some("BpError".to_string()),
+                    error_description: Some(self.to_string()),
+                    message: "Internal Server Error".to_string(),
+                })
+                .unwrap(),
+            )
     }
 
     fn status_code(&self) -> StatusCode {
