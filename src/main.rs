@@ -1,4 +1,5 @@
 mod api;
+mod base;
 mod extractors;
 mod middlewares;
 mod types;
