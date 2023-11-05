@@ -1,10 +1,10 @@
-use crate::{extractors::Claims, base::BpError, types::ErrorMessage};
+use crate::{base::BpError, extractors::Claims, types::ErrorMessage};
 use actix_web::{get, web, HttpResponse, Responder, Result};
 use basis::functions;
 use diesel::r2d2::ConnectionManager;
 use diesel::r2d2::Pool;
 use diesel::sqlite::SqliteConnection;
-//use rep::models::Benutzer;
+use rep::models::Benutzer;
 use std::collections::HashSet;
 
 type DbPool = Pool<ConnectionManager<SqliteConnection>>;
@@ -122,21 +122,12 @@ pub async fn list(pool: web::Data<DbPool>) -> Result<impl Responder, BpError> {
     let list = web::block(move || {
         // Obtaining a connection from the pool is also a potentially blocking operation.
         // So, it should be called within the `web::block` closure, as well.
-        let mut conn = pool.get().map_err(|e| {
-            BpError::ServiceError(service::ServiceError::error_string(&e.to_string()))
-        })?; //.expect("couldn't get db connection from pool");
+        let mut conn = pool.get()?; //.expect("couldn't get db connection from pool");
         let mut daten = service::ServiceData::new(&mut conn, 1, "test");
-        let list = service::client::get_user_list(&mut daten).map_err(|e| BpError::ServiceError(e));
-        list
-        // let err: Result<Vec<Benutzer>, BpError> =
-        //     Err(BpError::ServiceError(service::ServiceError::DieselError {
-        //         source: diesel::result::Error::NotInTransaction,
-        //     }));
-        // err
-        //insert_new_user(&mut conn, name)
+        let list = service::client::get_user_list(&mut daten)?;
+        Ok(list) as Result<Vec<Benutzer>, BpError>
     })
-    .await?
-    .map_err(|e| e)?;
+    .await??;
     // Masks passwords.
     let mut ben = Vec::new();
     for b in list {

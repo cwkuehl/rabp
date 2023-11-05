@@ -11,7 +11,7 @@ pub fn get_user_list<'a>(data: &'a mut ServiceData) -> Result<Vec<Benutzer>> {
     // let c = reps::establish_connection(daten);
     // let db = DbContext::new(daten, &c);
     //let l = vec![];
-    if functions::mach_nichts() == 1 {
+    if functions::mach_nichts() == 0 {
         let l = reps::benutzer::get_all(data.conn, data.mandant_nr)?;
         Ok(l)
     } else {
