@@ -135,6 +135,5 @@ pub async fn list(pool: web::Data<DbPool>) -> Result<impl Responder, BpError> {
         bc.passwort = Some("xxx".to_string());
         ben.push(bc);
     }
-    //Err::<impl Responder, actix_web::Error>(error::ErrorNotImplemented("Doch OK"))
     Ok(HttpResponse::Ok().json(ben))
 }

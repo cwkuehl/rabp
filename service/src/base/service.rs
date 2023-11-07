@@ -1,5 +1,6 @@
 //use crate::{config::RsbpConfig, res};
 use super::enums::RabpLocale;
+use super::undo::UndoList;
 use chrono::{DateTime, Local, NaiveDate, Timelike};
 use derive_debug::Dbg;
 
@@ -12,7 +13,7 @@ pub struct ServiceData<'a> {
     pub heute: NaiveDate,
     pub jetzt: DateTime<Local>,
     pub locale: RabpLocale,
-    // TODO UndoList
+    pub ul: UndoList,
 }
 
 impl<'a> ServiceData<'a> {
@@ -26,6 +27,7 @@ impl<'a> ServiceData<'a> {
             heute: now.date_naive(),
             jetzt: now,
             locale: RabpLocale::De, // TODO from request
+            ul: UndoList::new(),
         }
     }
 

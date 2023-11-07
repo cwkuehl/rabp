@@ -12,7 +12,7 @@ pub fn get_user_list<'a>(data: &'a mut ServiceData) -> Result<Vec<Benutzer>> {
     // let db = DbContext::new(daten, &c);
     //let l = vec![];
     if functions::mach_nichts() == 0 {
-        let l = reps::benutzer::get_all(data.conn, data.mandant_nr)?;
+        let l = reps::benutzer::get_list(data.conn, data.mandant_nr)?;
         Ok(l)
     } else {
         Err(crate::base::errors::ServiceError::NotFound)

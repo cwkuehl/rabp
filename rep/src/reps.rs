@@ -31,16 +31,16 @@ mod tests {
                     && !a.name.starts_with("MO_")
                     && !a.name.starts_with("SO_xxx")
                     && !a.name.starts_with("VM_")
-                //&& a.name == "MA_Parameter"
+                    && a.name == "Benutzer"
             })
             .collect::<Vec<_>>();
-        if self::mach_nichts() == 1 {
+        if self::mach_nichts() == 0 {
             let sb = create_reps(&t);
             println!("{}", sb);
         } else if self::mach_nichts() == 1 {
             let sb = create_undo_entry(&t);
             println!("{}", sb);
-        } else if self::mach_nichts() == 0 {
+        } else if self::mach_nichts() == 1 {
             std::fs::write(
                 "/home/wolfgang/rust/rabp/rep/src/schema.rs",
                 create_schema(&t),

@@ -8,12 +8,13 @@ edition = "2021"
 
 [dependencies]
 basis = { path = "../basis" }
-rep = { path = "../rep" }
+chrono = { version = "*", features = ["serde"] }
 derive-debug = "0.1"
 diesel = { version = "*", features = ["sqlite", "chrono"] }
+rep = { path = "../rep" }
 serde = { version = "*", features = ["derive"] }
-chrono = { version = "*", features = ["serde"] }
+serde_json = "1.0"
 
 [dev-dependencies]
-quick-xml = { version = "*" } # parse xml
 heck = { version = "*" }      # camelCase
+quick-xml = { version = "*" } # parse xml
