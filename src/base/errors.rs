@@ -57,6 +57,12 @@ impl error::ResponseError for BpError {
     }
 }
 
+impl std::convert::From<diesel::result::Error> for BpError {
+    fn from(item: diesel::result::Error) -> Self {
+        BpError::ServiceError(ServiceError::DieselError { source: item })
+    }
+}
+
 impl std::convert::From<ServiceError> for BpError {
     fn from(item: ServiceError) -> Self {
         BpError::ServiceError(item)
