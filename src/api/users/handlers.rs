@@ -51,24 +51,33 @@ Versioning: update with PATCH instead of PUT
 
 #[get("/")]
 async fn index() -> Result<&'static str, BpError> {
-    Err(BpError::InternalError)
+  functions::mach_nichts();
+  Err(BpError::InternalError)
 }
 
 #[get("")]
 pub async fn list(pool: web::Data<DbPool>) -> Result<impl Responder, BpError> {
-    functions::mach_nichts();
     let list = web::block(move || {
         // Obtaining a connection from the pool is also a potentially blocking operation.
         // So, it should be called within the `web::block` closure, as well.
         let mut conn = pool.get()?; //.expect("couldn't get db connection from pool");
-        let tr = conn.transaction::<Vec<Benutzer>, BpError, _>(|e| {
-            let mut daten = service::ServiceData::new(e, 1, "test");
-            let list = service::client::get_user_list(&mut daten)?;
-            Ok(list)
-        });
-        tr
+        let mut daten = service::ServiceData::new(&mut conn, 1, "test");
+        let list = service::client::get_user_list(&mut daten)?;
+        Ok(list) as Result<Vec<Benutzer>, BpError>
     })
     .await??;
+    // let list = web::block(move || {
+    //     // Obtaining a connection from the pool is also a potentially blocking operation.
+    //     // So, it should be called within the `web::block` closure, as well.
+    //     let mut conn = pool.get()?; //.expect("couldn't get db connection from pool");
+    //     let tr = conn.transaction::<Vec<Benutzer>, BpError, _>(|e| {
+    //         let mut daten = service::ServiceData::new(e, 1, "test");
+    //         let list = service::client::get_user_list(&mut daten)?;
+    //         Ok(list)
+    //     });
+    //     tr
+    // })
+    // .await??;
     // Masks passwords.
     let mut ben = Vec::new();
     for b in list {
