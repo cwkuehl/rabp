@@ -16,6 +16,7 @@ rep = { path = "./rep" }
 service = { path = "./service" }
 actix-cors = "0.6"
 actix-files = "0.6"
+actix-session = { version = "0.8", features = ["cookie-session"] }
 actix-web = { version = "4" , features = ["rustls-0_21"] }
 actix-web-httpauth = "0.8"
 awc = { version = "3.2", features = ["openssl"] }

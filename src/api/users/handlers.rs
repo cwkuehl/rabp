@@ -1,10 +1,10 @@
 use crate::{base::BpError, extractors::Claims, types::ErrorMessage};
+use actix_session::Session;
 use actix_web::{get, web, HttpResponse, Responder, Result};
 use basis::functions;
 use diesel::r2d2::ConnectionManager;
 use diesel::r2d2::Pool;
 use diesel::sqlite::SqliteConnection;
-use diesel::Connection;
 use rep::models::Benutzer;
 use std::collections::HashSet;
 
@@ -51,12 +51,20 @@ Versioning: update with PATCH instead of PUT
 
 #[get("/")]
 async fn index() -> Result<&'static str, BpError> {
-  functions::mach_nichts();
-  Err(BpError::InternalError)
+    functions::mach_nichts();
+    Err(BpError::InternalError)
 }
 
 #[get("")]
-pub async fn list(pool: web::Data<DbPool>) -> Result<impl Responder, BpError> {
+pub async fn list(session: Session, pool: web::Data<DbPool>) -> Result<impl Responder, BpError> {
+    // access the session state
+    if let Some(count) = session.get::<i32>("counter").map_err(|e| BpError::from(e.to_string()))? {
+        println!("SESSION value: {}", count);
+        // modify the session state
+        session.insert("counter", count + 1).map_err(|e| BpError::from(e.to_string()))?;
+    } else {
+        session.insert("counter", 1).map_err(|e| BpError::from(e.to_string()))?;
+    }
     let list = web::block(move || {
         // Obtaining a connection from the pool is also a potentially blocking operation.
         // So, it should be called within the `web::block` closure, as well.

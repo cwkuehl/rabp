@@ -80,3 +80,9 @@ impl std::convert::From<error::BlockingError> for BpError {
         BpError::BlockingError(item)
     }
 }
+
+impl std::convert::From<String> for BpError {
+    fn from(item: String) -> Self {
+        BpError::ServiceError(ServiceError::from(item))
+    }
+}

@@ -8,7 +8,9 @@ use basis::functions;
 use dotenv::dotenv;
 use std::{fs::File, io::BufReader};
 // use actix_files::Files;
+use actix_session::{storage::CookieSessionStore, SessionMiddleware};
 use actix_web::{
+    cookie::Key,
     //    http::header::ContentType,
     //     http::header::HeaderValue,
     //    middleware,
@@ -57,6 +59,7 @@ async fn main() -> std::io::Result<()> {
         .test_on_check_out(true)
         .build(manager)
         .expect("database URL should be valid path to SQLite DB file");
+    let secret_key = Key::generate();
     let s = HttpServer::new(move || {
         App::new()
             .app_data(auth0_config.clone())
@@ -65,6 +68,10 @@ async fn main() -> std::io::Result<()> {
             .wrap(middlewares::err_handlers())
             .wrap(middlewares::security_headers())
             .wrap(middlewares::logger())
+            .wrap(SessionMiddleware::new(
+                CookieSessionStore::default(),
+                secret_key.clone(),
+            ))
             .service(api::routes())
             .wrap(middlewares::SayHi)
     })

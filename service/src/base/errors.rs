@@ -92,3 +92,12 @@ impl ServiceError {
     //     }
     // }
 }
+
+impl std::convert::From<String> for ServiceError {
+    fn from(item: String) -> Self {
+        let v = vec![item];
+        ServiceError::ServiceError {
+            source: MessagesError { errors: v },
+        }
+    }
+}
