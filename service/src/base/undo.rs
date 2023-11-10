@@ -280,7 +280,7 @@ impl UndoEntry {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct UndoList {
     list: Vec<UndoEntry>,
 }
@@ -311,310 +311,310 @@ impl UndoList {
 //     static ref UNDO_STACK: Arc<RwLock<UndoRedoStack>> = Arc::new(RwLock::new(UndoRedoStack::new()));
 // }
 
-// #[derive(Clone, Debug)]
-// pub struct UndoRedoStack {
-//     undo: Vec<Arc<UndoList>>,
-//     redo: Vec<Arc<UndoList>>,
-// }
+#[derive(Clone, Debug)]
+pub struct UndoRedoStack {
+    _undo: Vec<UndoList>,
+    _redo: Vec<UndoList>,
+}
 
-// impl UndoRedoStack {
-//     pub fn new() -> Self {
-//         return UndoRedoStack {
-//             undo: Vec::new(),
-//             redo: Vec::new(),
-//         };
-//     }
+impl UndoRedoStack {
+    pub fn new() -> Self {
+        return UndoRedoStack {
+            _undo: Vec::new(),
+            _redo: Vec::new(),
+        };
+    }
 
-//     /// UndoList zum Stack nach Commit hinzufügen.
-//     pub fn add_undo(ul: &mut UndoList) {
-//         if ul.is_empty() {
-//             return;
-//         }
-//         {
-//             let mut guard = match UNDO_STACK.write() {
-//                 Ok(guard) => guard,
-//                 Err(poisoned) => poisoned.into_inner(),
-//             };
-//             (*guard).undo.push(ul.clone());
-//             (*guard).redo.clear(); // Alle Redos sind durch das neue Commit ungültig.
-//             if cfg!(debug_assertions) {
-//                 println!(
-//                     "undo: {}  redo: {}",
-//                     (*guard).undo.len(),
-//                     (*guard).redo.len()
-//                 )
-//             }
-//         }
-//     }
+    //     /// UndoList zum Stack nach Commit hinzufügen.
+    //     pub fn add_undo(ul: &mut UndoList) {
+    //         if ul.is_empty() {
+    //             return;
+    //         }
+    //         {
+    //             let mut guard = match UNDO_STACK.write() {
+    //                 Ok(guard) => guard,
+    //                 Err(poisoned) => poisoned.into_inner(),
+    //             };
+    //             (*guard).undo.push(ul.clone());
+    //             (*guard).redo.clear(); // Alle Redos sind durch das neue Commit ungültig.
+    //             if cfg!(debug_assertions) {
+    //                 println!(
+    //                     "undo: {}  redo: {}",
+    //                     (*guard).undo.len(),
+    //                     (*guard).redo.len()
+    //                 )
+    //             }
+    //         }
+    //     }
 
-//     fn remove_undo(&mut self, ul: &UndoList) {
-//         let li = self.undo.len() - 1;
-//         self.undo.remove(li);
-//         self.redo.push(ul.clone());
-//     }
+    //     fn remove_undo(&mut self, ul: &UndoList) {
+    //         let li = self.undo.len() - 1;
+    //         self.undo.remove(li);
+    //         self.redo.push(ul.clone());
+    //     }
 
-//     fn remove_redo(&mut self, ul: &UndoList) {
-//         let li = self.redo.len() - 1;
-//         self.redo.remove(li);
-//         self.undo.push(ul.clone());
-//     }
+    //     fn remove_redo(&mut self, ul: &UndoList) {
+    //         let li = self.redo.len() - 1;
+    //         self.redo.remove(li);
+    //         self.undo.push(ul.clone());
+    //     }
 
-//     /// Eine Transaktion zurücksetzen.
-//     /// * db: Kontext für Datenbank-Zugriff.
-//     /// * returns: Wurde etwas geändert?
-//     #[allow(unused_variables)]
-//     pub fn undo(db: &mut DbContext) -> Result<bool> {
-//         let mut guard = match UNDO_STACK.write() {
-//             Ok(guard) => guard,
-//             Err(poisoned) => poisoned.into_inner(),
-//         };
-//         let mut r = false;
-//         if let Some(ul0) = (*guard).undo.last() {
-//             let ul = &ul0.clone();
-//             for e in ul.list.iter() {
-//                 //println!("e: {:?}", e);
-//                 match e {
-//                     UndoEntry::AdAdresse { original, actual } => {
-//                         // TODO reps::ad_adresse::undo(db, original, actual)?;
-//                     }
-//                     UndoEntry::AdPerson { original, actual } => {
-//                         reps::ad_person::undo(db, original, actual)?;
-//                     }
-//                     UndoEntry::AdSitz { original, actual } => {
-//                         // reps::ad_sitz::undo(db, original, actual)?;
-//                     }
-//                     UndoEntry::Benutzer { original, actual } => {
-//                         reps::benutzer::undo(db, original, actual)?;
-//                     }
-//                     UndoEntry::ByteDaten { original, actual } => {
-//                         // reps::byte_daten::undo(db, original, actual)?;
-//                     }
-//                     UndoEntry::FzBuch { original, actual } => {
-//                         // reps::fz_buch::undo(db, original, actual)?;
-//                     }
-//                     UndoEntry::FzBuchautor { original, actual } => {
-//                         // reps::fz_buchautor::undo(db, original, actual)?;
-//                     }
-//                     UndoEntry::FzBuchserie { original, actual } => {
-//                         // reps::fz_buchserie::undo(db, original, actual)?;
-//                     }
-//                     UndoEntry::FzBuchstatus { original, actual } => {
-//                         // reps::fz_buchstatus::undo(db, original, actual)?;
-//                     }
-//                     UndoEntry::FzFahrrad { original, actual } => {
-//                         // reps::fz_fahrrad::undo(db, original, actual)?;
-//                     }
-//                     UndoEntry::FzFahrradstand { original, actual } => {
-//                         // reps::fz_fahrradstand::undo(db, original, actual)?;
-//                     }
-//                     UndoEntry::FzNotiz { original, actual } => {
-//                         // reps::fz_notiz::undo(db, original, actual)?;
-//                     }
-//                     UndoEntry::HhBilanz { original, actual } => {
-//                         // reps::hh_bilanz::undo(db, original, actual)?;
-//                     }
-//                     UndoEntry::HhBuchung { original, actual } => {
-//                         // reps::hh_buchung::undo(db, original, actual)?;
-//                     }
-//                     UndoEntry::HhEreignis { original, actual } => {
-//                         // reps::hh_ereignis::undo(db, original, actual)?;
-//                     }
-//                     UndoEntry::HhKonto { original, actual } => {
-//                         // reps::hh_konto::undo(db, original, actual)?;
-//                     }
-//                     UndoEntry::HhPeriode { original, actual } => {
-//                         // reps::hh_periode::undo(db, original, actual)?;
-//                     }
-//                     UndoEntry::MaMandant { original, actual } => {
-//                         reps::ma_mandant::undo(db, original, actual)?;
-//                     }
-//                     UndoEntry::MaParameter { original, actual } => {
-//                         reps::ma_parameter::undo(db, original, actual)?;
-//                     }
-//                     UndoEntry::SbEreignis { original, actual } => {
-//                         // reps::sb_ereignis::undo(db, original, actual)?;
-//                     }
-//                     UndoEntry::SbFamilie { original, actual } => {
-//                         // reps::sb_familie::undo(db, original, actual)?;
-//                     }
-//                     UndoEntry::SbKind { original, actual } => {
-//                         // reps::sb_kind::undo(db, original, actual)?;
-//                     }
-//                     UndoEntry::SbPerson { original, actual } => {
-//                         // reps::sb_person::undo(db, original, actual)?;
-//                     }
-//                     UndoEntry::SbQuelle { original, actual } => {
-//                         // reps::sb_quelle::undo(db, original, actual)?;
-//                     }
-//                     UndoEntry::SoKurse { original, actual } => {
-//                         // reps::so_kurse::undo(db, original, actual)?;
-//                     }
-//                     UndoEntry::TbEintrag { original, actual } => {
-//                         reps::tb_eintrag::undo(db, original, actual)?;
-//                     }
-//                     UndoEntry::TbEintragOrt { original, actual } => {
-//                         reps::tb_eintrag_ort::undo(db, original, actual)?;
-//                     }
-//                     UndoEntry::TbOrt { original, actual } => {
-//                         reps::tb_ort::undo(db, original, actual)?;
-//                     }
-//                     UndoEntry::WpAnlage { original, actual } => {
-//                         // reps::wp_anlage::undo(db, original, actual)?;
-//                     }
-//                     UndoEntry::WpBuchung { original, actual } => {
-//                         // reps::wp_buchung::undo(db, original, actual)?;
-//                     }
-//                     UndoEntry::WpKonfiguration { original, actual } => {
-//                         // reps::wp_konfiguration::undo(db, original, actual)?;
-//                     }
-//                     UndoEntry::WpStand { original, actual } => {
-//                         // reps::wp_stand::undo(db, original, actual)?;
-//                     }
-//                     UndoEntry::WpWertpapier { original, actual } => {
-//                         // reps::wp_wertpapier::undo(db, original, actual)?;
-//                     }
-//                 };
-//                 functions::mach_nichts();
-//             }
-//             (*guard).remove_undo(&ul);
-//             r = true;
-//         }
-//         if cfg!(debug_assertions) {
-//             println!(
-//                 "undo: {}  redo: {}",
-//                 (*guard).undo.len(),
-//                 (*guard).redo.len()
-//             )
-//         }
-//         Ok(r)
-//     }
+    //     /// Eine Transaktion zurücksetzen.
+    //     /// * db: Kontext für Datenbank-Zugriff.
+    //     /// * returns: Wurde etwas geändert?
+    //     #[allow(unused_variables)]
+    //     pub fn undo(db: &mut DbContext) -> Result<bool> {
+    //         let mut guard = match UNDO_STACK.write() {
+    //             Ok(guard) => guard,
+    //             Err(poisoned) => poisoned.into_inner(),
+    //         };
+    //         let mut r = false;
+    //         if let Some(ul0) = (*guard).undo.last() {
+    //             let ul = &ul0.clone();
+    //             for e in ul.list.iter() {
+    //                 //println!("e: {:?}", e);
+    //                 match e {
+    //                     UndoEntry::AdAdresse { original, actual } => {
+    //                         // TODO reps::ad_adresse::undo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::AdPerson { original, actual } => {
+    //                         reps::ad_person::undo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::AdSitz { original, actual } => {
+    //                         // reps::ad_sitz::undo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::Benutzer { original, actual } => {
+    //                         reps::benutzer::undo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::ByteDaten { original, actual } => {
+    //                         // reps::byte_daten::undo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::FzBuch { original, actual } => {
+    //                         // reps::fz_buch::undo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::FzBuchautor { original, actual } => {
+    //                         // reps::fz_buchautor::undo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::FzBuchserie { original, actual } => {
+    //                         // reps::fz_buchserie::undo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::FzBuchstatus { original, actual } => {
+    //                         // reps::fz_buchstatus::undo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::FzFahrrad { original, actual } => {
+    //                         // reps::fz_fahrrad::undo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::FzFahrradstand { original, actual } => {
+    //                         // reps::fz_fahrradstand::undo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::FzNotiz { original, actual } => {
+    //                         // reps::fz_notiz::undo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::HhBilanz { original, actual } => {
+    //                         // reps::hh_bilanz::undo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::HhBuchung { original, actual } => {
+    //                         // reps::hh_buchung::undo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::HhEreignis { original, actual } => {
+    //                         // reps::hh_ereignis::undo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::HhKonto { original, actual } => {
+    //                         // reps::hh_konto::undo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::HhPeriode { original, actual } => {
+    //                         // reps::hh_periode::undo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::MaMandant { original, actual } => {
+    //                         reps::ma_mandant::undo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::MaParameter { original, actual } => {
+    //                         reps::ma_parameter::undo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::SbEreignis { original, actual } => {
+    //                         // reps::sb_ereignis::undo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::SbFamilie { original, actual } => {
+    //                         // reps::sb_familie::undo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::SbKind { original, actual } => {
+    //                         // reps::sb_kind::undo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::SbPerson { original, actual } => {
+    //                         // reps::sb_person::undo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::SbQuelle { original, actual } => {
+    //                         // reps::sb_quelle::undo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::SoKurse { original, actual } => {
+    //                         // reps::so_kurse::undo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::TbEintrag { original, actual } => {
+    //                         reps::tb_eintrag::undo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::TbEintragOrt { original, actual } => {
+    //                         reps::tb_eintrag_ort::undo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::TbOrt { original, actual } => {
+    //                         reps::tb_ort::undo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::WpAnlage { original, actual } => {
+    //                         // reps::wp_anlage::undo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::WpBuchung { original, actual } => {
+    //                         // reps::wp_buchung::undo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::WpKonfiguration { original, actual } => {
+    //                         // reps::wp_konfiguration::undo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::WpStand { original, actual } => {
+    //                         // reps::wp_stand::undo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::WpWertpapier { original, actual } => {
+    //                         // reps::wp_wertpapier::undo(db, original, actual)?;
+    //                     }
+    //                 };
+    //                 functions::mach_nichts();
+    //             }
+    //             (*guard).remove_undo(&ul);
+    //             r = true;
+    //         }
+    //         if cfg!(debug_assertions) {
+    //             println!(
+    //                 "undo: {}  redo: {}",
+    //                 (*guard).undo.len(),
+    //                 (*guard).redo.len()
+    //             )
+    //         }
+    //         Ok(r)
+    //     }
 
-//     /// Eine Transaktion wiederherstellen.
-//     /// * db: Kontext für Datenbank-Zugriff.
-//     /// * returns: Wurde etwas geändert?
-//     #[allow(unused_variables)]
-//     pub fn redo(db: &mut DbContext) -> Result<bool> {
-//         let mut guard = match UNDO_STACK.write() {
-//             Ok(guard) => guard,
-//             Err(poisoned) => poisoned.into_inner(),
-//         };
-//         let mut r = false;
-//         if let Some(ul0) = (*guard).redo.last() {
-//             let ul = &ul0.clone();
-//             for e in ul.list.iter() {
-//                 //println!("e: {:?}", e);
-//                 match e {
-//                     UndoEntry::AdAdresse { original, actual } => {
-//                         // TODO reps::ad_adresse::redo(db, original, actual)?;
-//                     }
-//                     UndoEntry::AdPerson { original, actual } => {
-//                         reps::ad_person::redo(db, original, actual)?;
-//                     }
-//                     UndoEntry::AdSitz { original, actual } => {
-//                         // reps::ad_sitz::redo(db, original, actual)?;
-//                     }
-//                     UndoEntry::Benutzer { original, actual } => {
-//                         reps::benutzer::redo(db, original, actual)?;
-//                     }
-//                     UndoEntry::ByteDaten { original, actual } => {
-//                         // reps::byte_daten::redo(db, original, actual)?;
-//                     }
-//                     UndoEntry::FzBuch { original, actual } => {
-//                         // reps::fz_buch::redo(db, original, actual)?;
-//                     }
-//                     UndoEntry::FzBuchautor { original, actual } => {
-//                         // reps::fz_buchautor::redo(db, original, actual)?;
-//                     }
-//                     UndoEntry::FzBuchserie { original, actual } => {
-//                         // reps::fz_buchserie::redo(db, original, actual)?;
-//                     }
-//                     UndoEntry::FzBuchstatus { original, actual } => {
-//                         // reps::fz_buchstatus::redo(db, original, actual)?;
-//                     }
-//                     UndoEntry::FzFahrrad { original, actual } => {
-//                         // reps::fz_fahrrad::redo(db, original, actual)?;
-//                     }
-//                     UndoEntry::FzFahrradstand { original, actual } => {
-//                         // reps::fz_fahrradstand::redo(db, original, actual)?;
-//                     }
-//                     UndoEntry::FzNotiz { original, actual } => {
-//                         // reps::fz_notiz::redo(db, original, actual)?;
-//                     }
-//                     UndoEntry::HhBilanz { original, actual } => {
-//                         // reps::hh_bilanz::redo(db, original, actual)?;
-//                     }
-//                     UndoEntry::HhBuchung { original, actual } => {
-//                         // reps::hh_buchung::redo(db, original, actual)?;
-//                     }
-//                     UndoEntry::HhEreignis { original, actual } => {
-//                         // reps::hh_ereignis::redo(db, original, actual)?;
-//                     }
-//                     UndoEntry::HhKonto { original, actual } => {
-//                         // reps::hh_konto::redo(db, original, actual)?;
-//                     }
-//                     UndoEntry::HhPeriode { original, actual } => {
-//                         // reps::hh_periode::redo(db, original, actual)?;
-//                     }
-//                     UndoEntry::MaMandant { original, actual } => {
-//                         reps::ma_mandant::redo(db, original, actual)?;
-//                     }
-//                     UndoEntry::MaParameter { original, actual } => {
-//                         reps::ma_parameter::redo(db, original, actual)?;
-//                     }
-//                     UndoEntry::SbEreignis { original, actual } => {
-//                         // reps::sb_ereignis::redo(db, original, actual)?;
-//                     }
-//                     UndoEntry::SbFamilie { original, actual } => {
-//                         // reps::sb_familie::redo(db, original, actual)?;
-//                     }
-//                     UndoEntry::SbKind { original, actual } => {
-//                         // reps::sb_kind::redo(db, original, actual)?;
-//                     }
-//                     UndoEntry::SbPerson { original, actual } => {
-//                         // reps::sb_person::redo(db, original, actual)?;
-//                     }
-//                     UndoEntry::SbQuelle { original, actual } => {
-//                         // reps::sb_quelle::redo(db, original, actual)?;
-//                     }
-//                     UndoEntry::SoKurse { original, actual } => {
-//                         // reps::so_kurse::redo(db, original, actual)?;
-//                     }
-//                     UndoEntry::TbEintrag { original, actual } => {
-//                         reps::tb_eintrag::redo(db, original, actual)?;
-//                     }
-//                     UndoEntry::TbEintragOrt { original, actual } => {
-//                         reps::tb_eintrag_ort::redo(db, original, actual)?;
-//                     }
-//                     UndoEntry::TbOrt { original, actual } => {
-//                         reps::tb_ort::redo(db, original, actual)?;
-//                     }
-//                     UndoEntry::WpAnlage { original, actual } => {
-//                         // reps::wp_anlage::redo(db, original, actual)?;
-//                     }
-//                     UndoEntry::WpBuchung { original, actual } => {
-//                         // reps::wp_buchung::redo(db, original, actual)?;
-//                     }
-//                     UndoEntry::WpKonfiguration { original, actual } => {
-//                         // reps::wp_konfiguration::redo(db, original, actual)?;
-//                     }
-//                     UndoEntry::WpStand { original, actual } => {
-//                         // reps::wp_stand::redo(db, original, actual)?;
-//                     }
-//                     UndoEntry::WpWertpapier { original, actual } => {
-//                         // reps::wp_wertpapier::redo(db, original, actual)?;
-//                     }
-//                 };
-//             }
-//             (*guard).remove_redo(&ul);
-//             r = true;
-//         }
-//         if cfg!(debug_assertions) {
-//             println!(
-//                 "undo: {}  redo: {}",
-//                 (*guard).undo.len(),
-//                 (*guard).redo.len()
-//             )
-//         }
-//         Ok(r)
-//     }
-// }
+    //     /// Eine Transaktion wiederherstellen.
+    //     /// * db: Kontext für Datenbank-Zugriff.
+    //     /// * returns: Wurde etwas geändert?
+    //     #[allow(unused_variables)]
+    //     pub fn redo(db: &mut DbContext) -> Result<bool> {
+    //         let mut guard = match UNDO_STACK.write() {
+    //             Ok(guard) => guard,
+    //             Err(poisoned) => poisoned.into_inner(),
+    //         };
+    //         let mut r = false;
+    //         if let Some(ul0) = (*guard).redo.last() {
+    //             let ul = &ul0.clone();
+    //             for e in ul.list.iter() {
+    //                 //println!("e: {:?}", e);
+    //                 match e {
+    //                     UndoEntry::AdAdresse { original, actual } => {
+    //                         // TODO reps::ad_adresse::redo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::AdPerson { original, actual } => {
+    //                         reps::ad_person::redo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::AdSitz { original, actual } => {
+    //                         // reps::ad_sitz::redo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::Benutzer { original, actual } => {
+    //                         reps::benutzer::redo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::ByteDaten { original, actual } => {
+    //                         // reps::byte_daten::redo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::FzBuch { original, actual } => {
+    //                         // reps::fz_buch::redo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::FzBuchautor { original, actual } => {
+    //                         // reps::fz_buchautor::redo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::FzBuchserie { original, actual } => {
+    //                         // reps::fz_buchserie::redo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::FzBuchstatus { original, actual } => {
+    //                         // reps::fz_buchstatus::redo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::FzFahrrad { original, actual } => {
+    //                         // reps::fz_fahrrad::redo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::FzFahrradstand { original, actual } => {
+    //                         // reps::fz_fahrradstand::redo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::FzNotiz { original, actual } => {
+    //                         // reps::fz_notiz::redo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::HhBilanz { original, actual } => {
+    //                         // reps::hh_bilanz::redo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::HhBuchung { original, actual } => {
+    //                         // reps::hh_buchung::redo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::HhEreignis { original, actual } => {
+    //                         // reps::hh_ereignis::redo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::HhKonto { original, actual } => {
+    //                         // reps::hh_konto::redo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::HhPeriode { original, actual } => {
+    //                         // reps::hh_periode::redo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::MaMandant { original, actual } => {
+    //                         reps::ma_mandant::redo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::MaParameter { original, actual } => {
+    //                         reps::ma_parameter::redo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::SbEreignis { original, actual } => {
+    //                         // reps::sb_ereignis::redo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::SbFamilie { original, actual } => {
+    //                         // reps::sb_familie::redo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::SbKind { original, actual } => {
+    //                         // reps::sb_kind::redo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::SbPerson { original, actual } => {
+    //                         // reps::sb_person::redo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::SbQuelle { original, actual } => {
+    //                         // reps::sb_quelle::redo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::SoKurse { original, actual } => {
+    //                         // reps::so_kurse::redo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::TbEintrag { original, actual } => {
+    //                         reps::tb_eintrag::redo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::TbEintragOrt { original, actual } => {
+    //                         reps::tb_eintrag_ort::redo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::TbOrt { original, actual } => {
+    //                         reps::tb_ort::redo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::WpAnlage { original, actual } => {
+    //                         // reps::wp_anlage::redo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::WpBuchung { original, actual } => {
+    //                         // reps::wp_buchung::redo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::WpKonfiguration { original, actual } => {
+    //                         // reps::wp_konfiguration::redo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::WpStand { original, actual } => {
+    //                         // reps::wp_stand::redo(db, original, actual)?;
+    //                     }
+    //                     UndoEntry::WpWertpapier { original, actual } => {
+    //                         // reps::wp_wertpapier::redo(db, original, actual)?;
+    //                     }
+    //                 };
+    //             }
+    //             (*guard).remove_redo(&ul);
+    //             r = true;
+    //         }
+    //         if cfg!(debug_assertions) {
+    //             println!(
+    //                 "undo: {}  redo: {}",
+    //                 (*guard).undo.len(),
+    //                 (*guard).redo.len()
+    //             )
+    //         }
+    //         Ok(r)
+    //     }
+}

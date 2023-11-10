@@ -6,7 +6,7 @@ mod types;
 
 use basis::functions;
 use dotenv::dotenv;
-use std::{fs::File, io::BufReader};
+use std::{fs::File, io::BufReader, sync::Mutex};
 // use actix_files::Files;
 use actix_session::{storage::CookieSessionStore, SessionMiddleware};
 use actix_web::{
@@ -23,8 +23,6 @@ use log::{info, LevelFilter};
 //use r2d2_sqlite::SqliteConnectionManager;
 use rustls::{Certificate, PrivateKey, ServerConfig};
 use rustls_pemfile::{certs, pkcs8_private_keys};
-
-// type DbPool = Pool<SqliteConnectionManager>;
 
 // /// simple handle
 // async fn index(req: HttpRequest) -> HttpResponse {
@@ -60,10 +58,12 @@ async fn main() -> std::io::Result<()> {
         .build(manager)
         .expect("database URL should be valid path to SQLite DB file");
     let secret_key = Key::generate();
+    let undopool = web::Data::new(Mutex::new(base::UndoPool::new()));
     let s = HttpServer::new(move || {
         App::new()
             .app_data(auth0_config.clone())
             .app_data(web::Data::new(pool.clone()))
+            .app_data(web::Data::clone(&undopool))
             .wrap(middlewares::cors(&config.client_origin_url))
             .wrap(middlewares::err_handlers())
             .wrap(middlewares::security_headers())
