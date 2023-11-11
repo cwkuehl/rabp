@@ -5,7 +5,7 @@ use diesel::{
 use std::collections::HashMap;
 
 pub type DbPool = Pool<ConnectionManager<SqliteConnection>>;
-pub type UndoMap = HashMap<i32, service::UndoRedoStack>;
+pub type UndoMap = HashMap<usize, service::UndoRedoStack>;
 
 pub struct UndoPool {
     pub map: UndoMap,
@@ -14,7 +14,7 @@ pub struct UndoPool {
 impl UndoPool {
     pub fn new() -> UndoPool {
         UndoPool {
-            map: HashMap::<i32, service::UndoRedoStack>::new(),
+            map: HashMap::<usize, service::UndoRedoStack>::new(),
         }
     }
 }

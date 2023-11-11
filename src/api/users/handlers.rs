@@ -54,29 +54,55 @@ async fn index() -> Result<&'static str, BpError> {
     Err(BpError::InternalError)
 }
 
+use lazy_static::lazy_static;
+use std::sync::atomic::{AtomicUsize, Ordering};
+
+lazy_static! {
+    static ref SESSION_ID: AtomicUsize = AtomicUsize::new(1);
+}
+
+fn get_session_id(session: &Session) -> Result<usize, BpError> {
+    if let Some(id) = session
+        .get::<usize>("sid")
+        .map_err(|e| BpError::from(e.to_string()))?
+    {
+        Ok(id)
+    } else {
+        let id = SESSION_ID.fetch_add(1, Ordering::SeqCst);
+        session
+            .insert("sid", id)
+            .map_err(|e| BpError::from(e.to_string()))?;
+        Ok(id)
+    }
+}
+
 #[get("")]
 pub async fn list(
     session: Session,
     pool: web::Data<DbPool>,
     undo: web::Data<Mutex<UndoPool>>,
 ) -> Result<impl Responder, BpError> {
+    let session_id = get_session_id(&session)?;
     // access the session state
-    if let Some(count) = session
-        .get::<i32>("counter")
-        .map_err(|e| BpError::from(e.to_string()))?
-    {
-        println!("SESSION value: {}", count);
-        // modify the session state
-        session
-            .insert("counter", count + 1)
-            .map_err(|e| BpError::from(e.to_string()))?;
-    } else {
-        session
-            .insert("counter", 1)
-            .map_err(|e| BpError::from(e.to_string()))?;
-    }
+    // if let Some(count) = session
+    //     .get::<i32>("counter")
+    //     .map_err(|e| BpError::from(e.to_string()))?
+    // {
+    //     println!("SESSION value: {}", count);
+    //     // modify the session state
+    //     session
+    //         .insert("counter", count + 1)
+    //         .map_err(|e| BpError::from(e.to_string()))?;
+    // } else {
+    //     session
+    //         .insert("counter", 1)
+    //         .map_err(|e| BpError::from(e.to_string()))?;
+    // }
     let mut ul = undo.lock().map_err(|e| BpError::from(e.to_string()))?;
-    let _us = (*ul).map.entry(1).or_insert(service::UndoRedoStack::new());
+    let _us = (*ul)
+        .map
+        .entry(session_id)
+        .or_insert(service::UndoRedoStack::new());
     let list = web::block(move || {
         // Obtaining a connection from the pool is also a potentially blocking operation.
         // So, it should be called within the `web::block` closure, as well.
