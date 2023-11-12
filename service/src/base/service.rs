@@ -1,13 +1,13 @@
-//use crate::{config::RsbpConfig, res};
 use super::enums::RabpLocale;
 use super::undo::UndoList;
 use chrono::{DateTime, Local, NaiveDate, Timelike};
 use derive_debug::Dbg;
 
 #[derive(Dbg)]
-pub struct ServiceData<'a> {
-    #[dbg(placeholder = "...")]
-    pub conn: &'a mut diesel::SqliteConnection,
+pub struct ServiceData {
+    // <'a> {
+    //#[dbg(placeholder = "...")]
+    //pub conn: &'a mut diesel::SqliteConnection,
     pub mandant_nr: i32,
     pub benutzer_id: String,
     pub heute: NaiveDate,
@@ -16,12 +16,14 @@ pub struct ServiceData<'a> {
     pub ul: UndoList,
 }
 
-impl<'a> ServiceData<'a> {
-    pub fn new(conn: &'a mut diesel::SqliteConnection, mandant_nr: i32, benutzer_id: &str) -> Self {
+// impl<'a> ServiceData<'a> {
+impl ServiceData {
+    // pub fn new(conn: &'a mut diesel::SqliteConnection, mandant_nr: i32, benutzer_id: &str) -> Self {
+    pub fn new(mandant_nr: i32, benutzer_id: &str) -> Self {
         let mut now: DateTime<Local> = Local::now();
         now = now.with_nanosecond(0).unwrap_or(now); // nur sekundengenau
         ServiceData {
-            conn,
+            // conn,
             mandant_nr,
             benutzer_id: String::from(benutzer_id),
             heute: now.date_naive(),
@@ -36,23 +38,3 @@ impl<'a> ServiceData<'a> {
     //     daten
     // }
 }
-
-// /// Connection of ServiceDaten, database connection and UndoList for fewer parameters.
-// pub struct DbContext<'a> {
-//     pub daten: &'a ServiceDaten<'a>,
-//     pub c: &'a SqliteConnection,
-//     pub ul: UndoList,
-// }
-
-// impl<'a> DbContext<'a> {
-//     /// Initialisierung des Datenbank-Kontextes.
-//     /// * daten: Betroffene Service-Daten.
-//     /// * c: Betroffene Datenbank-Verbindung.
-//     pub fn new(daten: &'a ServiceDaten, c: &'a SqliteConnection) -> Self {
-//         DbContext {
-//             daten,
-//             c,
-//             ul: UndoList::new(),
-//         }
-//     }
-// }

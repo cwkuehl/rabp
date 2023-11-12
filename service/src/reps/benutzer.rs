@@ -1,11 +1,12 @@
-use crate::base::errors::Result;
+use crate::base::{errors::Result, undo::UndoEntry};
+use crate::{ServiceData, ServiceError};
 use rep::models::Benutzer;
 use rep::schema::BENUTZER;
 
 // use super::DbContext;
 // use crate::{config::RsbpError, services::undo::UndoEntry, Result};
 // use chrono::{NaiveDate, NaiveDateTime};
-// use diesel::prelude::*;
+use diesel::{prelude::*, SqliteConnection};
 // use rep::{models::Benutzer, schema::*};
 
 // /// Undo a dataset.
@@ -129,56 +130,62 @@ use rep::schema::BENUTZER;
 //     )
 // }
 
-// /// Get dataset by primary key.
-// #[allow(dead_code)]
-// pub fn get(
-//     db: &DbContext,
-//     mandant_nr_: &i32,
-//     benutzer_id_: &String
-// ) -> Result<Option<Benutzer>> {
-//     let p = BENUTZER::table
-//         .filter(
-//             BENUTZER::mandant_nr.eq(mandant_nr_)
-//             .and(BENUTZER::benutzer_id.eq(benutzer_id_.clone())),
-//         )
-//         .first::<Benutzer>(db.c)
-//         .optional()
-//         .map_err(|source: diesel::result::Error| RsbpError::DieselError { source })?;
-//     Ok(p)
-// }
+/// Get dataset by primary key.
+#[allow(dead_code)]
+pub fn get(
+    conn: &mut SqliteConnection,
+    // data: &ServiceData,
+    mandant_nr_: &i32,
+    benutzer_id_: &String,
+) -> Result<Option<Benutzer>> {
+    let p = BENUTZER::table
+        .filter(
+            BENUTZER::mandant_nr
+                .eq(mandant_nr_)
+                .and(BENUTZER::benutzer_id.eq(benutzer_id_.clone())),
+        )
+        .first::<Benutzer>(conn)
+        .optional()?;
+    Ok(p)
+}
 
-// /// Get dataset by primary key.
-// pub fn get2(db: &DbContext, b: &Benutzer) -> Result<Option<Benutzer>> {
-//     let p = BENUTZER::table
-//         .filter(
-//             BENUTZER::mandant_nr.eq(b.mandant_nr)
-//             .and(BENUTZER::benutzer_id.eq(b.benutzer_id.clone())),
-//         )
-//         .first::<Benutzer>(db.c)
-//         .optional()
-//         .map_err(|source: diesel::result::Error| RsbpError::DieselError { source })?;
-//     Ok(p)
-// }
+/// Get dataset by primary key.
+pub fn get2(con: &mut SqliteConnection, b: &Benutzer) -> Result<Option<Benutzer>> {
+    let p = BENUTZER::table
+        .filter(
+            BENUTZER::mandant_nr
+                .eq(b.mandant_nr)
+                .and(BENUTZER::benutzer_id.eq(b.benutzer_id.clone())),
+        )
+        .first::<Benutzer>(con)
+        .optional()?;
+    Ok(p)
+}
 
 /// Get list.
 #[allow(dead_code)]
-pub fn get_list(con: &mut diesel::SqliteConnection, mandant_nr_: i32) -> Result<Vec<Benutzer>> {
-    use diesel::prelude::*;
+pub fn get_list(con: &mut SqliteConnection, mandant_nr_: i32) -> Result<Vec<Benutzer>> {
     let list = BENUTZER::table
         .filter(BENUTZER::mandant_nr.eq(mandant_nr_))
         .load::<Benutzer>(con)?;
     Ok(list)
 }
 
-// /// Insert a dataset.
-// pub fn insert<'a>(db: &mut DbContext, b: &'a Benutzer) -> Result<&'a Benutzer> {
-//     let rows = diesel::insert_into(BENUTZER::table).values(b).execute(db.c)?;
-//     if rows <= 0 {
-//         return Err(RsbpError::NotFound);
-//     }
-//     db.ul.add(&UndoEntry::benutzer(None, Some(b)));
-//     Ok(b)
-// }
+/// Insert a dataset.
+pub fn insert<'a>(
+    con: &mut SqliteConnection,
+    data: &mut ServiceData,
+    b: &'a Benutzer,
+) -> Result<&'a Benutzer> {
+    let rows = diesel::insert_into(BENUTZER::table)
+        .values(b)
+        .execute(con)?;
+    if rows <= 0 {
+        return Err(ServiceError::NotFound);
+    }
+    data.ul.add(&UndoEntry::benutzer(None, Some(b)));
+    Ok(b)
+}
 
 // /// Update a dataset.
 // pub fn update<'a>(db: &mut DbContext, b: &'a Benutzer) -> Result<&'a Benutzer> {
@@ -210,21 +217,22 @@ pub fn get_list(con: &mut diesel::SqliteConnection, mandant_nr_: i32) -> Result<
 //     Ok(b)
 // }
 
-// /// Delete a dataset.
-// pub fn delete(db: &mut DbContext, b: &Benutzer) -> Result<()> {
-//     let oo = get2(db, b)?;
-//     let rows = diesel::delete(
-//         BENUTZER::table.filter(
-//             BENUTZER::mandant_nr.eq(b.mandant_nr)
-//             .and(BENUTZER::benutzer_id.eq(b.benutzer_id.clone())),
-//         ),
-//     )
-//     .execute(db.c)?;
-//     if rows <= 0 || oo.is_none() {
-//         return Err(RsbpError::NotFound);
-//     }
-//     if let Some(o) = oo {
-//         db.ul.add(&UndoEntry::benutzer(Some(&o), None));
-//     }
-//     Ok(())
-// }
+/// Delete a dataset.
+pub fn delete(con: &mut SqliteConnection, data: &mut ServiceData, b: &Benutzer) -> Result<()> {
+    let oo = get2(con, b)?;
+    let rows = diesel::delete(
+        BENUTZER::table.filter(
+            BENUTZER::mandant_nr
+                .eq(b.mandant_nr)
+                .and(BENUTZER::benutzer_id.eq(b.benutzer_id.clone())),
+        ),
+    )
+    .execute(con)?;
+    if rows <= 0 || oo.is_none() {
+        return Err(ServiceError::NotFound);
+    }
+    if let Some(o) = oo {
+        data.ul.add(&UndoEntry::benutzer(Some(&o), None));
+    }
+    Ok(())
+}

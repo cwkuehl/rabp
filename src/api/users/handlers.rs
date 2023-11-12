@@ -107,8 +107,8 @@ pub async fn list(
         // Obtaining a connection from the pool is also a potentially blocking operation.
         // So, it should be called within the `web::block` closure, as well.
         let mut conn = pool.get()?; //.expect("couldn't get db connection from pool");
-        let mut daten = service::ServiceData::new(&mut conn, 1, "test");
-        let list = service::client::get_user_list(&mut daten)?;
+        let mut data = service::ServiceData::new(1, "test");
+        let list = service::client::get_user_list(&mut conn, &mut data)?;
         Ok(list) as Result<Vec<Benutzer>, BpError>
     })
     .await??;
