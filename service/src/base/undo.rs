@@ -313,39 +313,31 @@ impl UndoList {
 
 #[derive(Clone, Debug)]
 pub struct UndoRedoStack {
-    _undo: Vec<UndoList>,
-    _redo: Vec<UndoList>,
+    undo: Vec<UndoList>,
+    redo: Vec<UndoList>,
 }
 
 impl UndoRedoStack {
     pub fn new() -> Self {
         return UndoRedoStack {
-            _undo: Vec::new(),
-            _redo: Vec::new(),
+            undo: Vec::new(),
+            redo: Vec::new(),
         };
     }
 
-    //     /// UndoList zum Stack nach Commit hinzufügen.
-    //     pub fn add_undo(ul: &mut UndoList) {
-    //         if ul.is_empty() {
-    //             return;
-    //         }
-    //         {
-    //             let mut guard = match UNDO_STACK.write() {
-    //                 Ok(guard) => guard,
-    //                 Err(poisoned) => poisoned.into_inner(),
-    //             };
-    //             (*guard).undo.push(ul.clone());
-    //             (*guard).redo.clear(); // Alle Redos sind durch das neue Commit ungültig.
-    //             if cfg!(debug_assertions) {
-    //                 println!(
-    //                     "undo: {}  redo: {}",
-    //                     (*guard).undo.len(),
-    //                     (*guard).redo.len()
-    //                 )
-    //             }
-    //         }
-    //     }
+    /// UndoList zum Stack nach Commit hinzufügen.
+    pub fn add_undo(&mut self, ul: &UndoList) {
+        if ul.is_empty() {
+            return;
+        }
+        {
+            self.undo.push(ul.clone());
+            self.redo.clear(); // Alle Redos sind durch das neue Commit ungültig.
+            if cfg!(debug_assertions) {
+                println!("undo: {}  redo: {}", self.undo.len(), self.redo.len())
+            }
+        }
+    }
 
     //     fn remove_undo(&mut self, ul: &UndoList) {
     //         let li = self.undo.len() - 1;

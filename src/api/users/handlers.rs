@@ -7,6 +7,7 @@ use actix_session::Session;
 use actix_web::{get, web, HttpResponse, Responder, Result};
 use basis::functions;
 use rep::models::Benutzer;
+use service::UndoList;
 use std::{collections::HashSet, sync::Mutex};
 
 #[get("/xxx")]
@@ -83,47 +84,21 @@ pub async fn list(
     undo: web::Data<Mutex<UndoPool>>,
 ) -> Result<impl Responder, BpError> {
     let session_id = get_session_id(&session)?;
-    // access the session state
-    // if let Some(count) = session
-    //     .get::<i32>("counter")
-    //     .map_err(|e| BpError::from(e.to_string()))?
-    // {
-    //     println!("SESSION value: {}", count);
-    //     // modify the session state
-    //     session
-    //         .insert("counter", count + 1)
-    //         .map_err(|e| BpError::from(e.to_string()))?;
-    // } else {
-    //     session
-    //         .insert("counter", 1)
-    //         .map_err(|e| BpError::from(e.to_string()))?;
-    // }
     let mut ul = undo.lock().map_err(|e| BpError::from(e.to_string()))?;
-    let _us = (*ul)
+    let us = (*ul)
         .map
         .entry(session_id)
         .or_insert(service::UndoRedoStack::new());
-    let list = web::block(move || {
+    let mut data = service::ServiceData::new(1, "test");
+    let (list, ul2) = web::block(move || {
         // Obtaining a connection from the pool is also a potentially blocking operation.
         // So, it should be called within the `web::block` closure, as well.
-        let mut conn = pool.get()?; //.expect("couldn't get db connection from pool");
-        let mut data = service::ServiceData::new(1, "test");
+        let mut conn = pool.get()?;
         let list = service::client::get_user_list(&mut conn, &mut data)?;
-        Ok(list) as Result<Vec<Benutzer>, BpError>
+        Ok((list, data.ul)) as Result<(Vec<Benutzer>, UndoList), BpError>
     })
     .await??;
-    // let list = web::block(move || {
-    //     // Obtaining a connection from the pool is also a potentially blocking operation.
-    //     // So, it should be called within the `web::block` closure, as well.
-    //     let mut conn = pool.get()?; //.expect("couldn't get db connection from pool");
-    //     let tr = conn.transaction::<Vec<Benutzer>, BpError, _>(|e| {
-    //         let mut daten = service::ServiceData::new(e, 1, "test");
-    //         let list = service::client::get_user_list(&mut daten)?;
-    //         Ok(list)
-    //     });
-    //     tr
-    // })
-    // .await??;
+    us.add_undo(&ul2);
     // Masks passwords.
     let mut ben = Vec::new();
     for b in list {
