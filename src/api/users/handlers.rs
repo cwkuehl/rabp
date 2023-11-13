@@ -88,7 +88,7 @@ pub async fn list(
     let us = (*ul)
         .map
         .entry(session_id)
-        .or_insert(service::UndoRedoStack::new());
+        .or_insert(service::UndoRedoStack::new(session_id));
     let mut data = service::ServiceData::new(1, "test");
     let (list, ul2) = web::block(move || {
         // Obtaining a connection from the pool is also a potentially blocking operation.

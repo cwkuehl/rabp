@@ -313,13 +313,15 @@ impl UndoList {
 
 #[derive(Clone, Debug)]
 pub struct UndoRedoStack {
+    session_id: usize,
     undo: Vec<UndoList>,
     redo: Vec<UndoList>,
 }
 
 impl UndoRedoStack {
-    pub fn new() -> Self {
+    pub fn new(session_id: usize) -> Self {
         return UndoRedoStack {
+            session_id,
             undo: Vec::new(),
             redo: Vec::new(),
         };
@@ -334,7 +336,7 @@ impl UndoRedoStack {
             self.undo.push(ul.clone());
             self.redo.clear(); // Alle Redos sind durch das neue Commit ungültig.
             if cfg!(debug_assertions) {
-                println!("undo: {}  redo: {}", self.undo.len(), self.redo.len())
+                println!("session_id: {}  undo: {}  redo: {}", self.session_id, self.undo.len(), self.redo.len())
             }
         }
     }
