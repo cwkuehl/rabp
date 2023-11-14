@@ -77,8 +77,54 @@ fn get_session_id(session: &Session) -> Result<usize, BpError> {
     }
 }
 
+/// Surrounding function for UndoPool logic.
+async fn session_undo<F, R>(
+    session: Session,
+    undo: web::Data<Mutex<UndoPool>>,
+    f: F,
+) -> Result<R, BpError>
+where
+    F: FnOnce() -> Result<(R, UndoList), BpError> + Send + 'static,
+    R: Send + 'static,
+{
+    let session_id = get_session_id(&session)?;
+    let mut ul = undo.lock().map_err(|e| BpError::from(e.to_string()))?;
+    let us = (*ul)
+        .map
+        .entry(session_id)
+        .or_insert(service::UndoRedoStack::new(session_id));
+    let (r, ul2) = f()?;
+    us.add_undo(&ul2);
+    Ok(r)
+}
+
 #[get("")]
 pub async fn list(
+    session: Session,
+    pool: web::Data<DbPool>,
+    undo: web::Data<Mutex<UndoPool>>,
+) -> Result<impl Responder, BpError> {
+    let mut data = service::ServiceData::new(1, "test");
+    let f = move || {
+        // Obtaining a connection from the pool is also a potentially blocking operation.
+        // So, it should be called within the `web::block` closure, as well.
+        let mut conn = pool.get()?;
+        let ulist = service::client::get_user_list(&mut conn, &mut data)?;
+        // Masks passwords.
+        let mut ben = Vec::new();
+        for b in ulist {
+            let mut bc = b.clone();
+            bc.passwort = Some("xxx".to_string());
+            ben.push(bc);
+        }
+        Ok((ben, data.ul)) as Result<(Vec<Benutzer>, UndoList), BpError>
+    };
+    let ulist = session_undo(session, undo, f).await?;
+    Ok(HttpResponse::Ok().json(ulist))
+}
+
+#[get("")]
+pub async fn listok(
     session: Session,
     pool: web::Data<DbPool>,
     undo: web::Data<Mutex<UndoPool>>,
@@ -90,21 +136,21 @@ pub async fn list(
         .entry(session_id)
         .or_insert(service::UndoRedoStack::new(session_id));
     let mut data = service::ServiceData::new(1, "test");
-    let (list, ul2) = web::block(move || {
+    let (ulist, ul2) = web::block(move || {
         // Obtaining a connection from the pool is also a potentially blocking operation.
         // So, it should be called within the `web::block` closure, as well.
         let mut conn = pool.get()?;
-        let list = service::client::get_user_list(&mut conn, &mut data)?;
-        Ok((list, data.ul)) as Result<(Vec<Benutzer>, UndoList), BpError>
+        let ulist = service::client::get_user_list(&mut conn, &mut data)?;
+        // Masks passwords.
+        let mut ben = Vec::new();
+        for b in ulist {
+            let mut bc = b.clone();
+            bc.passwort = Some("xxx".to_string());
+            ben.push(bc);
+        }
+        Ok((ben, data.ul)) as Result<(Vec<Benutzer>, UndoList), BpError>
     })
     .await??;
     us.add_undo(&ul2);
-    // Masks passwords.
-    let mut ben = Vec::new();
-    for b in list {
-        let mut bc = b.clone();
-        bc.passwort = Some("xxx".to_string());
-        ben.push(bc);
-    }
-    Ok(HttpResponse::Ok().json(ben))
+    Ok(HttpResponse::Ok().json(ulist))
 }
