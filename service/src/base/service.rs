@@ -1,6 +1,6 @@
 use super::enums::RabpLocale;
 use super::undo::UndoList;
-use chrono::{DateTime, Local, NaiveDate, Timelike};
+use chrono::{DateTime, Local, NaiveDate, NaiveDateTime, Timelike};
 use derive_debug::Dbg;
 
 #[derive(Dbg)]
@@ -33,8 +33,13 @@ impl ServiceData {
         }
     }
 
-    // pub fn new() -> Self {
-    //     let daten = get_daten();
-    //     daten
-    // }
+    pub fn get_now(&self) -> NaiveDateTime {
+        let j = &self.jetzt.naive_local().with_nanosecond(0).unwrap();
+        *j
+    }
+
+    pub fn get_today(&self) -> NaiveDate {
+        let j = &self.heute.clone();
+        *j
+    }
 }
