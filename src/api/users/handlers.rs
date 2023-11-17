@@ -108,23 +108,16 @@ pub async fn list(
     let f = move || {
         // Obtaining a connection from the pool is also a potentially blocking operation.
         // So, it should be called within the `web::block` closure, as well.
-        let mut conn = pool.get()?;
-        let ulist = service::client::get_user_list(&mut conn, &mut data)?;
-        // Masks passwords.
-        let mut ben = Vec::new();
-        for b in ulist {
-            let mut bc = b.clone();
-            bc.passwort = Some("xxx".to_string());
-            ben.push(bc);
-        }
-        Ok((ben, data.ul)) as Result<(Vec<Benutzer>, UndoList), BpError>
+        let mut con = pool.get()?;
+        let ulist = service::client::get_user_list(&mut con, &mut data, true, true)?;
+        Ok((ulist, data.ul)) as Result<(Vec<Benutzer>, UndoList), BpError>
     };
     let ulist = session_undo(session, undo, f).await?;
     Ok(HttpResponse::Ok().json(ulist))
 }
 
-#[get("")]
-pub async fn listok(
+#[get("/u")]
+pub async fn listu(
     session: Session,
     pool: web::Data<DbPool>,
     undo: web::Data<Mutex<UndoPool>>,
@@ -136,21 +129,45 @@ pub async fn listok(
         .entry(session_id)
         .or_insert(service::UndoRedoStack::new(session_id));
     let mut data = service::ServiceData::new(1, "test");
+    let undolist0 = us.get_last_undo();
+    data.ul.add_list(&undolist0);
+    //let undolist1 = Box::new(undolist0.clone());
+    //let undolist = Box::new(undolist0);
     let (ulist, ul2) = web::block(move || {
         // Obtaining a connection from the pool is also a potentially blocking operation.
         // So, it should be called within the `web::block` closure, as well.
-        let mut conn = pool.get()?;
-        let ulist = service::client::get_user_list(&mut conn, &mut data)?;
-        // Masks passwords.
-        let mut ben = Vec::new();
-        for b in ulist {
-            let mut bc = b.clone();
-            bc.passwort = Some("xxx".to_string());
-            ben.push(bc);
-        }
-        Ok((ben, data.ul)) as Result<(Vec<Benutzer>, UndoList), BpError>
+        let mut con = pool.get()?;
+        service::client::undo(&mut con, &mut data)?; //, undolist)?;
+        let ulist = service::client::get_user_list(&mut con, &mut data, true, false)?;
+        Ok((ulist, data.ul)) as Result<(Vec<Benutzer>, UndoList), BpError>
     })
     .await??;
-    us.add_undo(&ul2);
+    us.remove_undo(&ul2);
+    Ok(HttpResponse::Ok().json(ulist))
+}
+
+#[get("/r")]
+pub async fn listr(
+    session: Session,
+    pool: web::Data<DbPool>,
+    undo: web::Data<Mutex<UndoPool>>,
+) -> Result<impl Responder, BpError> {
+    let session_id = get_session_id(&session)?;
+    let mut ul = undo.lock().map_err(|e| BpError::from(e.to_string()))?;
+    let us = (*ul)
+        .map
+        .entry(session_id)
+        .or_insert(service::UndoRedoStack::new(session_id));
+    let mut data = service::ServiceData::new(1, "test");
+    let undolist0 = us.get_last_redo();
+    data.ul.add_list(&undolist0);
+    let (ulist, ul2) = web::block(move || {
+        let mut con = pool.get()?;
+        service::client::redo(&mut con, &mut data)?;
+        let ulist = service::client::get_user_list(&mut con, &mut data, true, false)?;
+        Ok((ulist, data.ul)) as Result<(Vec<Benutzer>, UndoList), BpError>
+    })
+    .await??;
+    us.remove_redo(&ul2);
     Ok(HttpResponse::Ok().json(ulist))
 }
