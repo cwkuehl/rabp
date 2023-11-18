@@ -77,7 +77,7 @@ fn get_session_id(session: &Session) -> Result<usize, BpError> {
     }
 }
 
-/// Surrounding function for UndoPool logic.
+/// Surrounding function for session handling and undo pool logic.
 async fn session_undo<F, R>(
     session: Session,
     undo: web::Data<Mutex<UndoPool>>,
@@ -87,14 +87,31 @@ where
     F: FnOnce() -> Result<(R, UndoList), BpError> + Send + 'static,
     R: Send + 'static,
 {
+    // First: Session id is used to identify the undo stack.
     let session_id = get_session_id(&session)?;
-    let mut ul = undo.lock().map_err(|e| BpError::from(e.to_string()))?;
-    let us = (*ul)
-        .map
-        .entry(session_id)
-        .or_insert(service::UndoRedoStack::new(session_id));
-    let (r, ul2) = f()?;
-    us.add_undo(&ul2);
+    // Second: Doing the actual work.
+    let (r, ul) = f()?;
+    // Third: Optimistic locking the undo pool to get the undo stack.
+    // let uplock = undo.lock().map_err(|e| BpError::from(e.to_string()))?;
+    match undo.lock() {
+        Err(e) => {
+            // TODO Undo if mutex has error.
+            // let (ulist, ul2) = web::block(move || {
+            //     let mut con = pool.get()?;
+            //     service::client::undo(&mut con, &mut data)?; //, undolist)?;
+            //     Ok((ulist, data.ul)) as Result<(Vec<Benutzer>, UndoList), BpError>
+            // })
+            // .await??;
+            return Err(BpError::from(e.to_string()));
+        }
+        Ok(mut uplock) => {
+            let urstack = (*uplock)
+                .map
+                .entry(session_id)
+                .or_insert(service::UndoRedoStack::new(session_id));
+            urstack.add_undo(&ul);
+        }
+    }
     Ok(r)
 }
 
