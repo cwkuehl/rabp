@@ -387,12 +387,12 @@ impl UndoRedoStack {
                 self.undo.len(),
                 self.redo.len()
             );
-            for e in self.undo.iter() {
-                println!("  undo {}", e.list.len());
-            }
-            for e in self.redo.iter() {
-                println!("  redo {}", e.list.len());
-            }
+            // for e in self.undo.iter() {
+            //     println!("  undo {}", e.list.len());
+            // }
+            // for e in self.redo.iter() {
+            //     println!("  redo {}", e.list.len());
+            // }
         }
     }
 
