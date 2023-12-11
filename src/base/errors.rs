@@ -19,6 +19,9 @@ pub enum BpError {
 
     //#[display(fmt = "blocking error")]
     BlockingError(error::BlockingError),
+
+    //#[display(fmt = "permission error")]
+    PermissionError,
 }
 
 impl std::fmt::Display for BpError {
@@ -28,6 +31,7 @@ impl std::fmt::Display for BpError {
             BpError::ConnectionError(ref e) => write!(f, "connection error ({})", e),
             BpError::InternalError => write!(f, "internal error"),
             BpError::BlockingError(ref e) => write!(f, "blocking error ({})", e),
+            BpError::PermissionError => write!(f, "permission error"),
         }
     }
 }
@@ -53,6 +57,7 @@ impl error::ResponseError for BpError {
             BpError::ConnectionError(_) => StatusCode::FAILED_DEPENDENCY,
             BpError::InternalError => StatusCode::INTERNAL_SERVER_ERROR,
             BpError::BlockingError(_) => StatusCode::NOT_IMPLEMENTED,
+            BpError::PermissionError => StatusCode::UNAUTHORIZED,
         }
     }
 }

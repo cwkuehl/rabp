@@ -4,10 +4,10 @@ use actix_web::{
     http::{StatusCode, Uri},
     Error, FromRequest, HttpResponse,
 };
-use awc::Client;
 use actix_web_httpauth::{
     extractors::bearer::BearerAuth, headers::www_authenticate::bearer::Bearer,
 };
+use awc::Client;
 use derive_more::Display;
 use jsonwebtoken::{
     decode, decode_header,
@@ -82,6 +82,7 @@ impl ResponseError for ClientError {
 
 #[derive(Debug, Deserialize)]
 pub struct Claims {
+    pub sub: String,
     permissions: Option<HashSet<String>>,
 }
 
@@ -121,9 +122,11 @@ impl FromRequest for Claims {
                         .unwrap(),
                 )
                 .send()
-                .await.map_err(|_err| ClientError::NotFound("Send, No JWK found for kid".to_string()))?
+                .await
+                .map_err(|_err| ClientError::NotFound("Send, No JWK found for kid".to_string()))?
                 .json()
-                .await.map_err(|_err| ClientError::NotFound("Json, No JWK found for kid".to_string()))?;
+                .await
+                .map_err(|_err| ClientError::NotFound("Json, No JWK found for kid".to_string()))?;
             let jwk = jwks
                 .find(&kid)
                 .ok_or_else(|| ClientError::NotFound("No JWK found for kid".to_string()))?;

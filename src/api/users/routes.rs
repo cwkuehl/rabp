@@ -7,4 +7,6 @@ pub fn routes() -> Scope {
         .service(handlers::list)
         .service(handlers::listu)
         .service(handlers::listr)
+        .service(handlers::listwo)
+        .service(handlers::login)
 }

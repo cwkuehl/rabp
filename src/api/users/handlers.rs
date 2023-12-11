@@ -77,6 +77,68 @@ fn get_session_id(session: &Session) -> Result<usize, BpError> {
     }
 }
 
+fn get_client_id(session: &Session) -> Result<i32, BpError> {
+    if let Some(clientid) = session
+        .get::<i32>("clientid")
+        .map_err(|e| BpError::from(e.to_string()))?
+    {
+        Ok(clientid)
+    } else {
+        Err(BpError::PermissionError)
+    }
+}
+
+fn get_user_id(session: &Session) -> Result<String, BpError> {
+    if let Some(userid) = session
+        .get::<String>("userid")
+        .map_err(|e| BpError::from(e.to_string()))?
+    {
+        Ok(userid)
+    } else {
+        Err(BpError::PermissionError)
+    }
+}
+
+pub fn check_permission(
+    claims: Option<Claims>,
+    session: Session,
+) -> Result<service::ServiceData, BpError> {
+    let perm = "read:admin-messages";
+    if let Some(claims) = claims {
+        if !claims.validate_permissions(&HashSet::from([perm.to_string()])) {
+            return Err(BpError::PermissionError);
+        }
+    }
+    let client = get_client_id(&session)?;
+    let user = get_user_id(&session)?;
+    let data = service::ServiceData::new(client, &user);
+    Ok(data)
+}
+
+pub fn init_session(
+    claims: Option<Claims>,
+    session: Session,
+    clientid: i32,
+    userid: &str,
+) -> Result<service::ServiceData, BpError> {
+    let perm = "read:admin-messages";
+    if let Some(claims) = claims {
+        if !claims.validate_permissions(&HashSet::from([perm.to_string()])) {
+            return Err(BpError::PermissionError);
+        }
+    }
+    session.remove("clientid");
+    session
+        .insert("clientid", clientid)
+        .map_err(|e| BpError::from(e.to_string()))?;
+      session.remove("userid");
+      session
+          .insert("userid", userid)
+          .map_err(|e| BpError::from(e.to_string()))?;
+      let data = service::ServiceData::new(clientid, &userid);
+    Ok(data)
+}
+
 /// Surrounding function for session handling and undo pool logic.
 async fn session_undo<F, R>(
     session: Session,
@@ -115,13 +177,17 @@ where
     Ok(r)
 }
 
-#[get("")]
-pub async fn list(
+#[get("/login/{clientid}/{userid}")]
+pub async fn login(
+    path: web::Path<(i32, String)>,
+    claims: Claims,
     session: Session,
     pool: web::Data<DbPool>,
     undo: web::Data<Mutex<UndoPool>>,
 ) -> Result<impl Responder, BpError> {
-    let mut data = service::ServiceData::new(1, "test");
+    let (clientid, userid) = path.into_inner();
+    let mut data = init_session(Some(claims), session.clone(), clientid, &userid)?;
+    // let mut data = service::ServiceData::new(clientid, &userid);
     let f = move || {
         // Obtaining a connection from the pool is also a potentially blocking operation.
         // So, it should be called within the `web::block` closure, as well.
@@ -130,6 +196,39 @@ pub async fn list(
         Ok((ulist, data.ul)) as Result<(Vec<Benutzer>, UndoList), BpError>
     };
     let ulist = session_undo(session, undo, f).await?;
+    Ok(HttpResponse::Ok().json(ulist))
+}
+
+#[get("")]
+pub async fn list(
+    claims: Claims,
+    session: Session,
+    pool: web::Data<DbPool>,
+    undo: web::Data<Mutex<UndoPool>>,
+) -> Result<impl Responder, BpError> {
+    let mut data = check_permission(Some(claims), session.clone())?;
+    //let mut data = service::ServiceData::new(1, "test");
+    let f = move || {
+        // Obtaining a connection from the pool is also a potentially blocking operation.
+        // So, it should be called within the `web::block` closure, as well.
+        let mut con = pool.get()?;
+        let ulist = service::client::get_user_list(&mut con, &mut data, true, true)?;
+        Ok((ulist, data.ul)) as Result<(Vec<Benutzer>, UndoList), BpError>
+    };
+    let ulist = session_undo(session, undo, f).await?;
+    Ok(HttpResponse::Ok().json(ulist))
+}
+
+#[get("/wo")]
+pub async fn listwo(pool: web::Data<DbPool>) -> Result<impl Responder, BpError> {
+    let mut data = service::ServiceData::new(1, "user");
+    let (ulist, _ul2) = web::block(move || {
+        let mut con = pool.get()?;
+        service::client::undo(&mut con, &mut data)?; //, undolist)?;
+        let ulist = service::client::get_user_list(&mut con, &mut data, true, false)?;
+        Ok((ulist, data.ul)) as Result<(Vec<Benutzer>, UndoList), BpError>
+    })
+    .await??;
     Ok(HttpResponse::Ok().json(ulist))
 }
 

@@ -7,4 +7,5 @@ pub fn cors(client_origin_url: &str) -> Cors {
         .allowed_methods([Method::GET])
         .allowed_headers([header::AUTHORIZATION, header::CONTENT_TYPE])
         .max_age(86_400)
+        .supports_credentials() // cookies
 }

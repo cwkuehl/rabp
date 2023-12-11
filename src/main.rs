@@ -4,36 +4,14 @@ mod extractors;
 mod middlewares;
 mod types;
 
+use actix_web::{web, App, HttpServer};
 use basis::functions;
 use dotenv::dotenv;
-use std::{fs::File, io::BufReader, sync::Mutex};
-// use actix_files::Files;
-use actix_session::{storage::CookieSessionStore, SessionMiddleware};
-use actix_web::{
-    cookie::Key,
-    //    http::header::ContentType,
-    //     http::header::HeaderValue,
-    //    middleware,
-    web,
-    App,
-    //     HttpRequest, HttpResponse,
-    HttpServer,
-};
 use log::{info, LevelFilter};
+use std::{fs::File, io::BufReader, sync::Mutex};
 //use r2d2_sqlite::SqliteConnectionManager;
 use rustls::{Certificate, PrivateKey, ServerConfig};
 use rustls_pemfile::{certs, pkcs8_private_keys};
-
-// /// simple handle
-// async fn index(req: HttpRequest) -> HttpResponse {
-//     debug!("{req:?}");
-
-//     HttpResponse::Ok().content_type(ContentType::html()).body(
-//         "<!DOCTYPE html><html><body>\
-//             <p>Welcome to your TLS-secured homepage!</p>\
-//         </body></html>",
-//     )
-// }
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -57,7 +35,6 @@ async fn main() -> std::io::Result<()> {
         .test_on_check_out(true)
         .build(manager)
         .expect("database URL should be valid path to SQLite DB file");
-    let secret_key = Key::generate();
     let undopool = web::Data::new(Mutex::new(base::UndoPool::new()));
     let s = HttpServer::new(move || {
         App::new()
@@ -68,10 +45,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(middlewares::err_handlers())
             .wrap(middlewares::security_headers())
             .wrap(middlewares::logger())
-            .wrap(SessionMiddleware::new(
-                CookieSessionStore::default(),
-                secret_key.clone(),
-            ))
+            .wrap(middlewares::cookie_session())
             .service(api::routes())
             .wrap(middlewares::SayHi)
     })
