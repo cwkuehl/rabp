@@ -42,4 +42,8 @@ impl ServiceData {
         let j = &self.heute.clone();
         *j
     }
+
+    pub fn get_session_id(&self) -> String {
+        format!("{}-{}", self.mandant_nr, self.benutzer_id)
+    }
 }

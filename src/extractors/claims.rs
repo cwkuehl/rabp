@@ -8,6 +8,7 @@ use actix_web_httpauth::{
     extractors::bearer::BearerAuth, headers::www_authenticate::bearer::Bearer,
 };
 use awc::Client;
+use basis::functions;
 use derive_more::Display;
 use jsonwebtoken::{
     decode, decode_header,
@@ -91,6 +92,31 @@ impl Claims {
         self.permissions.as_ref().map_or(false, |permissions| {
             permissions.is_superset(required_permissions)
         })
+    }
+
+    pub fn get_client_id(&self) -> i32 {
+        self.permissions.as_ref().map_or(-1, |permissions| {
+            functions::to_i32(
+                permissions
+                    .iter()
+                    .find(|a| a.starts_with("client:"))
+                    .unwrap_or(&"-2".to_string())
+                    .replace("client:", "")
+                    .as_str(),
+            )
+        })
+    }
+
+    pub fn get_user_id(&self) -> String {
+        self.permissions
+            .as_ref()
+            .map_or("".to_string(), |permissions| {
+                permissions
+                    .iter()
+                    .find(|a| a.starts_with("user:"))
+                    .unwrap_or(&"".to_string())
+                    .replace("user:", "")
+            })
     }
 }
 

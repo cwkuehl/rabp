@@ -3,7 +3,6 @@ use crate::{
     extractors::Claims,
     types::ErrorMessage,
 };
-use actix_session::Session;
 use actix_web::{get, web, HttpResponse, Responder, Result};
 use basis::functions;
 use rep::models::Benutzer;
@@ -56,92 +55,35 @@ async fn index() -> Result<&'static str, BpError> {
 }
 
 use lazy_static::lazy_static;
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::atomic::AtomicUsize;
 
 lazy_static! {
     static ref SESSION_ID: AtomicUsize = AtomicUsize::new(1);
 }
 
-fn get_session_id(session: &Session) -> Result<usize, BpError> {
-    if let Some(id) = session
-        .get::<usize>("sid")
-        .map_err(|e| BpError::from(e.to_string()))?
-    {
-        Ok(id)
-    } else {
-        let id = SESSION_ID.fetch_add(1, Ordering::SeqCst);
-        session
-            .insert("sid", id)
-            .map_err(|e| BpError::from(e.to_string()))?;
-        Ok(id)
-    }
-}
-
-fn get_client_id(session: &Session) -> Result<i32, BpError> {
-    if let Some(clientid) = session
-        .get::<i32>("clientid")
-        .map_err(|e| BpError::from(e.to_string()))?
-    {
-        Ok(clientid)
-    } else {
-        Err(BpError::PermissionError)
-    }
-}
-
-fn get_user_id(session: &Session) -> Result<String, BpError> {
-    if let Some(userid) = session
-        .get::<String>("userid")
-        .map_err(|e| BpError::from(e.to_string()))?
-    {
-        Ok(userid)
-    } else {
-        Err(BpError::PermissionError)
-    }
-}
-
-pub fn check_permission(
+pub fn get_service_data(
     claims: Option<Claims>,
-    session: Session,
+    admin: bool,
 ) -> Result<service::ServiceData, BpError> {
-    let perm = "read:admin-messages";
+    let mut clientid: i32 = 1;
+    let mut userid: String = "wolfgang".to_string();
     if let Some(claims) = claims {
-        if !claims.validate_permissions(&HashSet::from([perm.to_string()])) {
-            return Err(BpError::PermissionError);
+        clientid = claims.get_client_id();
+        userid = claims.get_user_id();
+        if admin {
+            let perm = "perm:admin1";
+            if !claims.validate_permissions(&HashSet::from([perm.to_string()])) {
+                return Err(BpError::PermissionError);
+            }
         }
     }
-    let client = get_client_id(&session)?;
-    let user = get_user_id(&session)?;
-    let data = service::ServiceData::new(client, &user);
-    Ok(data)
-}
-
-pub fn init_session(
-    claims: Option<Claims>,
-    session: Session,
-    clientid: i32,
-    userid: &str,
-) -> Result<service::ServiceData, BpError> {
-    let perm = "read:admin-messages";
-    if let Some(claims) = claims {
-        if !claims.validate_permissions(&HashSet::from([perm.to_string()])) {
-            return Err(BpError::PermissionError);
-        }
-    }
-    session.remove("clientid");
-    session
-        .insert("clientid", clientid)
-        .map_err(|e| BpError::from(e.to_string()))?;
-      session.remove("userid");
-      session
-          .insert("userid", userid)
-          .map_err(|e| BpError::from(e.to_string()))?;
-      let data = service::ServiceData::new(clientid, &userid);
+    let data = service::ServiceData::new(clientid, &userid);
     Ok(data)
 }
 
 /// Surrounding function for session handling and undo pool logic.
 async fn session_undo<F, R>(
-    session: Session,
+    session_id: String,
     undo: web::Data<Mutex<UndoPool>>,
     f: F,
 ) -> Result<R, BpError>
@@ -150,7 +92,8 @@ where
     R: Send + 'static,
 {
     // First: Session id is used to identify the undo stack.
-    let session_id = get_session_id(&session)?;
+    // let session_id = get_session_id(&session)?;
+    let sid = session_id.clone();
     // Second: Doing the actual work.
     let (r, ul) = f()?;
     // Third: Optimistic locking the undo pool to get the undo stack.
@@ -170,44 +113,44 @@ where
             let urstack = (*uplock)
                 .map
                 .entry(session_id)
-                .or_insert(service::UndoRedoStack::new(session_id));
+                .or_insert(service::UndoRedoStack::new(sid));
             urstack.add_undo(&ul);
         }
     }
     Ok(r)
 }
 
-#[get("/login/{clientid}/{userid}")]
-pub async fn login(
-    path: web::Path<(i32, String)>,
-    claims: Claims,
-    session: Session,
-    pool: web::Data<DbPool>,
-    undo: web::Data<Mutex<UndoPool>>,
-) -> Result<impl Responder, BpError> {
-    let (clientid, userid) = path.into_inner();
-    let mut data = init_session(Some(claims), session.clone(), clientid, &userid)?;
-    // let mut data = service::ServiceData::new(clientid, &userid);
-    let f = move || {
-        // Obtaining a connection from the pool is also a potentially blocking operation.
-        // So, it should be called within the `web::block` closure, as well.
-        let mut con = pool.get()?;
-        let ulist = service::client::get_user_list(&mut con, &mut data, true, true)?;
-        Ok((ulist, data.ul)) as Result<(Vec<Benutzer>, UndoList), BpError>
-    };
-    let ulist = session_undo(session, undo, f).await?;
-    Ok(HttpResponse::Ok().json(ulist))
-}
+// #[get("/login/{clientid}/{userid}")]
+// pub async fn login(
+//     path: web::Path<(i32, String)>,
+//     claims: Claims,
+//     session: Session,
+//     pool: web::Data<DbPool>,
+//     undo: web::Data<Mutex<UndoPool>>,
+// ) -> Result<impl Responder, BpError> {
+//     let (clientid, userid) = path.into_inner();
+//     let mut data = init_session(Some(claims), session.clone(), clientid, &userid)?;
+//     let session_id = data.get_session_id();
+//     // let mut data = service::ServiceData::new(clientid, &userid);
+//     let f = move || {
+//         // Obtaining a connection from the pool is also a potentially blocking operation.
+//         // So, it should be called within the `web::block` closure, as well.
+//         let mut con = pool.get()?;
+//         let ulist = service::client::get_user_list(&mut con, &mut data, true, true)?;
+//         Ok((ulist, data.ul)) as Result<(Vec<Benutzer>, UndoList), BpError>
+//     };
+//     let ulist = session_undo(session_id, undo, f).await?;
+//     Ok(HttpResponse::Ok().json(ulist))
+// }
 
 #[get("")]
 pub async fn list(
     claims: Claims,
-    session: Session,
     pool: web::Data<DbPool>,
     undo: web::Data<Mutex<UndoPool>>,
 ) -> Result<impl Responder, BpError> {
-    let mut data = check_permission(Some(claims), session.clone())?;
-    //let mut data = service::ServiceData::new(1, "test");
+    let mut data = get_service_data(Some(claims), true)?;
+    let session_id = data.get_session_id();
     let f = move || {
         // Obtaining a connection from the pool is also a potentially blocking operation.
         // So, it should be called within the `web::block` closure, as well.
@@ -215,7 +158,7 @@ pub async fn list(
         let ulist = service::client::get_user_list(&mut con, &mut data, true, true)?;
         Ok((ulist, data.ul)) as Result<(Vec<Benutzer>, UndoList), BpError>
     };
-    let ulist = session_undo(session, undo, f).await?;
+    let ulist = session_undo(session_id, undo, f).await?;
     Ok(HttpResponse::Ok().json(ulist))
 }
 
@@ -234,21 +177,19 @@ pub async fn listwo(pool: web::Data<DbPool>) -> Result<impl Responder, BpError> 
 
 #[get("/u")]
 pub async fn listu(
-    session: Session,
+    claims: Claims,
     pool: web::Data<DbPool>,
     undo: web::Data<Mutex<UndoPool>>,
 ) -> Result<impl Responder, BpError> {
-    let session_id = get_session_id(&session)?;
+    let mut data = get_service_data(Some(claims), true)?;
+    let session_id = data.get_session_id();
     let mut ul = undo.lock().map_err(|e| BpError::from(e.to_string()))?;
     let us = (*ul)
         .map
-        .entry(session_id)
+        .entry(session_id.clone())
         .or_insert(service::UndoRedoStack::new(session_id));
-    let mut data = service::ServiceData::new(1, "test");
     let undolist0 = us.get_last_undo();
     data.ul.add_list(&undolist0);
-    //let undolist1 = Box::new(undolist0.clone());
-    //let undolist = Box::new(undolist0);
     let (ulist, ul2) = web::block(move || {
         // Obtaining a connection from the pool is also a potentially blocking operation.
         // So, it should be called within the `web::block` closure, as well.
@@ -264,17 +205,17 @@ pub async fn listu(
 
 #[get("/r")]
 pub async fn listr(
-    session: Session,
+    claims: Claims,
     pool: web::Data<DbPool>,
     undo: web::Data<Mutex<UndoPool>>,
 ) -> Result<impl Responder, BpError> {
-    let session_id = get_session_id(&session)?;
+    let mut data = get_service_data(Some(claims), true)?;
+    let session_id = data.get_session_id();
     let mut ul = undo.lock().map_err(|e| BpError::from(e.to_string()))?;
     let us = (*ul)
         .map
-        .entry(session_id)
+        .entry(session_id.clone())
         .or_insert(service::UndoRedoStack::new(session_id));
-    let mut data = service::ServiceData::new(1, "test");
     let undolist0 = us.get_last_redo();
     data.ul.add_list(&undolist0);
     let (ulist, ul2) = web::block(move || {

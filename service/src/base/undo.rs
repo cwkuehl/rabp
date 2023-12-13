@@ -319,13 +319,13 @@ impl UndoList {
 
 #[derive(Clone, Debug)]
 pub struct UndoRedoStack {
-    session_id: usize,
+    session_id: String,
     undo: Vec<UndoList>,
     redo: Vec<UndoList>,
 }
 
 impl UndoRedoStack {
-    pub fn new(session_id: usize) -> Self {
+    pub fn new(session_id: String) -> Self {
         return UndoRedoStack {
             session_id,
             undo: Vec::new(),

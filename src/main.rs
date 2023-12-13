@@ -45,7 +45,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(middlewares::err_handlers())
             .wrap(middlewares::security_headers())
             .wrap(middlewares::logger())
-            .wrap(middlewares::cookie_session())
+            // .wrap(middlewares::cookie_session())
             .service(api::routes())
             .wrap(middlewares::SayHi)
     })
