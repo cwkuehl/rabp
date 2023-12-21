@@ -8,8 +8,7 @@ use crate::{
 };
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::{prelude::*, SqliteConnection};
-use rep::models::Benutzer;
-use rep::schema::BENUTZER;
+use rep::{models::TbEintrag, schema::TB_EINTRAG};
 
 /// Undo a dataset.
 pub fn undo(
@@ -18,8 +17,8 @@ pub fn undo(
     or: &String,
     ac: &String,
 ) -> Result<()> {
-    let oo = UndoEntry::from_str::<Benutzer>(or)?;
-    let oa = UndoEntry::from_str::<Benutzer>(ac)?;
+    let oo = UndoEntry::from_str::<TbEintrag>(or)?;
+    let oa = UndoEntry::from_str::<TbEintrag>(ac)?;
     if let (Some(o), Some(_a)) = (&oo, &oa) {
         // Update
         update(con, data, o)?;
@@ -40,8 +39,8 @@ pub fn redo(
     or: &String,
     ac: &String,
 ) -> Result<()> {
-    let oo = UndoEntry::from_str::<Benutzer>(or)?;
-    let oa = UndoEntry::from_str::<Benutzer>(ac)?;
+    let oo = UndoEntry::from_str::<TbEintrag>(or)?;
+    let oa = UndoEntry::from_str::<TbEintrag>(ac)?;
     if let (Some(_o), Some(a)) = (&oo, &oa) {
         // Update
         update(con, data, a)?;
@@ -61,37 +60,31 @@ pub fn save0(
     con: &mut SqliteConnection,
     data: &mut ServiceData,
     mandant_nr_: &i32,
-    benutzer_id_: &String,
-    passwort_: &Option<String>,
-    berechtigung_: &i32,
-    akt_periode_: &i32,
-    person_nr_: &i32,
-    geburt_: &Option<NaiveDate>,
+    datum_: &NaiveDate,
+    eintrag_: &String,
     angelegt_von_: &Option<String>,
     angelegt_am_: &Option<NaiveDateTime>,
     geaendert_von_: &Option<String>,
     geaendert_am_: &Option<NaiveDateTime>,
-) -> Result<Benutzer> {
-    let op = BENUTZER::table
+    replikation_uid_: &Option<String>,
+) -> Result<TbEintrag> {
+    let op = TB_EINTRAG::table
         .filter(
-            BENUTZER::mandant_nr
+            TB_EINTRAG::mandant_nr
                 .eq(mandant_nr_)
-                .and(BENUTZER::benutzer_id.eq(benutzer_id_.clone())),
+                .and(TB_EINTRAG::datum.eq(datum_.clone())),
         )
-        .first::<Benutzer>(con)
+        .first::<TbEintrag>(con)
         .optional()?;
-    let mut p = Benutzer {
+    let mut p = TbEintrag {
         mandant_nr: *mandant_nr_,
-        benutzer_id: benutzer_id_.clone(),
-        passwort: passwort_.clone(),
-        berechtigung: *berechtigung_,
-        akt_periode: *akt_periode_,
-        person_nr: *person_nr_,
-        geburt: geburt_.clone(),
+        datum: datum_.clone(),
+        eintrag: eintrag_.clone(),
         angelegt_von: None,
         angelegt_am: None,
         geaendert_von: None,
         geaendert_am: None,
+        replikation_uid: replikation_uid_.clone(),
     };
     if let Some(pu) = op {
         if p != pu {
@@ -121,23 +114,16 @@ pub fn save(
     con: &mut SqliteConnection,
     data: &mut ServiceData,
     mandant_nr_: &i32,
-    benutzer_id_: &String,
-    passwort_: &Option<String>,
-    berechtigung_: &i32,
-    akt_periode_: &i32,
-    person_nr_: &i32,
-    geburt_: &Option<NaiveDate>,
-) -> Result<Benutzer> {
+    datum_: &NaiveDate,
+    eintrag_: &String,
+) -> Result<TbEintrag> {
     save0(
         con,
         data,
         mandant_nr_,
-        benutzer_id_,
-        passwort_,
-        berechtigung_,
-        akt_periode_,
-        person_nr_,
-        geburt_,
+        datum_,
+        eintrag_,
+        &None,
         &None,
         &None,
         &None,
@@ -148,41 +134,40 @@ pub fn save(
 /// Get dataset by primary key.
 #[allow(dead_code)]
 pub fn get(
-    conn: &mut SqliteConnection,
-    // data: &ServiceData,
+    con: &mut SqliteConnection,
     mandant_nr_: &i32,
-    benutzer_id_: &String,
-) -> Result<Option<Benutzer>> {
-    let p = BENUTZER::table
+    datum_: &NaiveDate,
+) -> Result<Option<TbEintrag>> {
+    let p = TB_EINTRAG::table
         .filter(
-            BENUTZER::mandant_nr
+            TB_EINTRAG::mandant_nr
                 .eq(mandant_nr_)
-                .and(BENUTZER::benutzer_id.eq(benutzer_id_.clone())),
+                .and(TB_EINTRAG::datum.eq(datum_.clone())),
         )
-        .first::<Benutzer>(conn)
+        .first::<TbEintrag>(con)
         .optional()?;
     Ok(p)
 }
 
 /// Get dataset by primary key.
-pub fn get2(con: &mut SqliteConnection, b: &Benutzer) -> Result<Option<Benutzer>> {
-    let p = BENUTZER::table
+pub fn get2(con: &mut SqliteConnection, b: &TbEintrag) -> Result<Option<TbEintrag>> {
+    let p = TB_EINTRAG::table
         .filter(
-            BENUTZER::mandant_nr
+            TB_EINTRAG::mandant_nr
                 .eq(b.mandant_nr)
-                .and(BENUTZER::benutzer_id.eq(b.benutzer_id.clone())),
+                .and(TB_EINTRAG::datum.eq(b.datum.clone())),
         )
-        .first::<Benutzer>(con)
+        .first::<TbEintrag>(con)
         .optional()?;
     Ok(p)
 }
 
 /// Get list.
 #[allow(dead_code)]
-pub fn get_list(con: &mut SqliteConnection, mandant_nr_: i32) -> Result<Vec<Benutzer>> {
-    let list = BENUTZER::table
-        .filter(BENUTZER::mandant_nr.eq(mandant_nr_))
-        .load::<Benutzer>(con)?;
+pub fn get_list(con: &mut SqliteConnection, mandant_nr_: i32) -> Result<Vec<TbEintrag>> {
+    let list = TB_EINTRAG::table
+        .filter(TB_EINTRAG::mandant_nr.eq(mandant_nr_))
+        .load::<TbEintrag>(con)?;
     Ok(list)
 }
 
@@ -190,15 +175,15 @@ pub fn get_list(con: &mut SqliteConnection, mandant_nr_: i32) -> Result<Vec<Benu
 pub fn insert<'a>(
     con: &mut SqliteConnection,
     data: &mut ServiceData,
-    b: &'a Benutzer,
-) -> Result<&'a Benutzer> {
-    let rows = diesel::insert_into(BENUTZER::table)
+    b: &'a TbEintrag,
+) -> Result<&'a TbEintrag> {
+    let rows = diesel::insert_into(TB_EINTRAG::table)
         .values(b)
         .execute(con)?;
     if rows <= 0 {
         return Err(ServiceError::NotFound);
     }
-    data.ul.add(&UndoEntry::benutzer(None, Some(b)));
+    data.ul.add(&UndoEntry::tb_eintrag(None, Some(b)));
     Ok(b)
 }
 
@@ -206,45 +191,42 @@ pub fn insert<'a>(
 pub fn update<'a>(
     con: &mut SqliteConnection,
     data: &mut ServiceData,
-    b: &'a Benutzer,
-) -> Result<&'a Benutzer> {
+    b: &'a TbEintrag,
+) -> Result<&'a TbEintrag> {
     let oo = get2(con, b)?;
     let rows = diesel::update(
-        BENUTZER::table.filter(
-            BENUTZER::mandant_nr
+        TB_EINTRAG::table.filter(
+            TB_EINTRAG::mandant_nr
                 .eq(b.mandant_nr)
-                .and(BENUTZER::benutzer_id.eq(b.benutzer_id.clone())),
+                .and(TB_EINTRAG::datum.eq(b.datum.clone())),
         ),
     )
     .set((
-        BENUTZER::passwort.eq(b.passwort.as_ref()),
-        BENUTZER::berechtigung.eq(b.berechtigung),
-        BENUTZER::akt_periode.eq(b.akt_periode),
-        BENUTZER::person_nr.eq(b.person_nr),
-        BENUTZER::geburt.eq(b.geburt),
-        BENUTZER::angelegt_von.eq(b.angelegt_von.as_ref()),
-        BENUTZER::angelegt_am.eq(b.angelegt_am),
-        BENUTZER::geaendert_von.eq(b.geaendert_von.as_ref()),
-        BENUTZER::geaendert_am.eq(b.geaendert_am),
+        TB_EINTRAG::eintrag.eq(b.eintrag.as_str()),
+        TB_EINTRAG::angelegt_von.eq(b.angelegt_von.as_ref()),
+        TB_EINTRAG::angelegt_am.eq(b.angelegt_am),
+        TB_EINTRAG::geaendert_von.eq(b.geaendert_von.as_ref()),
+        TB_EINTRAG::geaendert_am.eq(b.geaendert_am),
+        TB_EINTRAG::replikation_uid.eq(b.replikation_uid.as_ref()),
     ))
     .execute(con)?;
     if rows <= 0 || oo.is_none() {
         return Err(ServiceError::NotFound);
     }
     if let Some(o) = oo {
-        data.ul.add(&UndoEntry::benutzer(Some(&o), Some(b)));
+        data.ul.add(&UndoEntry::tb_eintrag(Some(&o), Some(b)));
     }
     Ok(b)
 }
 
 /// Delete a dataset.
-pub fn delete(con: &mut SqliteConnection, data: &mut ServiceData, b: &Benutzer) -> Result<()> {
+pub fn delete(con: &mut SqliteConnection, data: &mut ServiceData, b: &TbEintrag) -> Result<()> {
     let oo = get2(con, b)?;
     let rows = diesel::delete(
-        BENUTZER::table.filter(
-            BENUTZER::mandant_nr
+        TB_EINTRAG::table.filter(
+            TB_EINTRAG::mandant_nr
                 .eq(b.mandant_nr)
-                .and(BENUTZER::benutzer_id.eq(b.benutzer_id.clone())),
+                .and(TB_EINTRAG::datum.eq(b.datum.clone())),
         ),
     )
     .execute(con)?;
@@ -252,7 +234,7 @@ pub fn delete(con: &mut SqliteConnection, data: &mut ServiceData, b: &Benutzer) 
         return Err(ServiceError::NotFound);
     }
     if let Some(o) = oo {
-        data.ul.add(&UndoEntry::benutzer(Some(&o), None));
+        data.ul.add(&UndoEntry::tb_eintrag(Some(&o), None));
     }
     Ok(())
 }

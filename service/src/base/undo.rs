@@ -420,103 +420,103 @@ impl UndoRedoStack {
             //println!("e: {:?}", e);
             match e {
                 UndoEntry::AdAdresse { original, actual } => {
-                    // TODO reps::ad_adresse::undo(db, original, actual)?;
+                    // TODO reps::ad_adresse::undo(con, data, original, actual)?;
                 }
                 UndoEntry::AdPerson { original, actual } => {
-                    // reps::ad_person::undo(db, original, actual)?;
+                    // reps::ad_person::undo(con, data, original, actual)?;
                 }
                 UndoEntry::AdSitz { original, actual } => {
-                    // reps::ad_sitz::undo(db, original, actual)?;
+                    // reps::ad_sitz::undo(con, data, original, actual)?;
                 }
                 UndoEntry::Benutzer { original, actual } => {
                     reps::benutzer::undo(con, data, original, actual)?;
                 }
                 UndoEntry::ByteDaten { original, actual } => {
-                    // reps::byte_daten::undo(db, original, actual)?;
+                    // reps::byte_daten::undo(con, data, original, actual)?;
                 }
                 UndoEntry::FzBuch { original, actual } => {
-                    // reps::fz_buch::undo(db, original, actual)?;
+                    // reps::fz_buch::undo(con, data, original, actual)?;
                 }
                 UndoEntry::FzBuchautor { original, actual } => {
-                    // reps::fz_buchautor::undo(db, original, actual)?;
+                    // reps::fz_buchautor::undo(con, data, original, actual)?;
                 }
                 UndoEntry::FzBuchserie { original, actual } => {
-                    // reps::fz_buchserie::undo(db, original, actual)?;
+                    // reps::fz_buchserie::undo(con, data, original, actual)?;
                 }
                 UndoEntry::FzBuchstatus { original, actual } => {
-                    // reps::fz_buchstatus::undo(db, original, actual)?;
+                    // reps::fz_buchstatus::undo(con, data, original, actual)?;
                 }
                 UndoEntry::FzFahrrad { original, actual } => {
-                    // reps::fz_fahrrad::undo(db, original, actual)?;
+                    // reps::fz_fahrrad::undo(con, data, original, actual)?;
                 }
                 UndoEntry::FzFahrradstand { original, actual } => {
-                    // reps::fz_fahrradstand::undo(db, original, actual)?;
+                    // reps::fz_fahrradstand::undo(con, data, original, actual)?;
                 }
                 UndoEntry::FzNotiz { original, actual } => {
-                    // reps::fz_notiz::undo(db, original, actual)?;
+                    // reps::fz_notiz::undo(con, data, original, actual)?;
                 }
                 UndoEntry::HhBilanz { original, actual } => {
-                    // reps::hh_bilanz::undo(db, original, actual)?;
+                    // reps::hh_bilanz::undo(con, data, original, actual)?;
                 }
                 UndoEntry::HhBuchung { original, actual } => {
-                    // reps::hh_buchung::undo(db, original, actual)?;
+                    // reps::hh_buchung::undo(con, data, original, actual)?;
                 }
                 UndoEntry::HhEreignis { original, actual } => {
-                    // reps::hh_ereignis::undo(db, original, actual)?;
+                    // reps::hh_ereignis::undo(con, data, original, actual)?;
                 }
                 UndoEntry::HhKonto { original, actual } => {
-                    // reps::hh_konto::undo(db, original, actual)?;
+                    // reps::hh_konto::undo(con, data, original, actual)?;
                 }
                 UndoEntry::HhPeriode { original, actual } => {
-                    // reps::hh_periode::undo(db, original, actual)?;
+                    // reps::hh_periode::undo(con, data, original, actual)?;
                 }
                 UndoEntry::MaMandant { original, actual } => {
-                    // reps::ma_mandant::undo(db, original, actual)?;
+                    // reps::ma_mandant::undo(con, data, original, actual)?;
                 }
                 UndoEntry::MaParameter { original, actual } => {
-                    // reps::ma_parameter::undo(db, original, actual)?;
+                    // reps::ma_parameter::undo(con, data, original, actual)?;
                 }
                 UndoEntry::SbEreignis { original, actual } => {
-                    // reps::sb_ereignis::undo(db, original, actual)?;
+                    // reps::sb_ereignis::undo(con, data, original, actual)?;
                 }
                 UndoEntry::SbFamilie { original, actual } => {
-                    // reps::sb_familie::undo(db, original, actual)?;
+                    // reps::sb_familie::undo(con, data, original, actual)?;
                 }
                 UndoEntry::SbKind { original, actual } => {
-                    // reps::sb_kind::undo(db, original, actual)?;
+                    // reps::sb_kind::undo(con, data, original, actual)?;
                 }
                 UndoEntry::SbPerson { original, actual } => {
-                    // reps::sb_person::undo(db, original, actual)?;
+                    // reps::sb_person::undo(con, data, original, actual)?;
                 }
                 UndoEntry::SbQuelle { original, actual } => {
-                    // reps::sb_quelle::undo(db, original, actual)?;
+                    // reps::sb_quelle::undo(con, data, original, actual)?;
                 }
                 UndoEntry::SoKurse { original, actual } => {
-                    // reps::so_kurse::undo(db, original, actual)?;
+                    // reps::so_kurse::undo(con, data, original, actual)?;
                 }
                 UndoEntry::TbEintrag { original, actual } => {
-                    // reps::tb_eintrag::undo(db, original, actual)?;
+                    reps::tb_eintrag::undo(con, data, original, actual)?;
                 }
                 UndoEntry::TbEintragOrt { original, actual } => {
-                    // reps::tb_eintrag_ort::undo(db, original, actual)?;
+                    // reps::tb_eintrag_ort::undo(con, data, original, actual)?;
                 }
                 UndoEntry::TbOrt { original, actual } => {
-                    // reps::tb_ort::undo(db, original, actual)?;
+                    // reps::tb_ort::undo(con, data, original, actual)?;
                 }
                 UndoEntry::WpAnlage { original, actual } => {
-                    // reps::wp_anlage::undo(db, original, actual)?;
+                    // reps::wp_anlage::undo(con, data, original, actual)?;
                 }
                 UndoEntry::WpBuchung { original, actual } => {
-                    // reps::wp_buchung::undo(db, original, actual)?;
+                    // reps::wp_buchung::undo(con, data, original, actual)?;
                 }
                 UndoEntry::WpKonfiguration { original, actual } => {
-                    // reps::wp_konfiguration::undo(db, original, actual)?;
+                    // reps::wp_konfiguration::undo(con, data, original, actual)?;
                 }
                 UndoEntry::WpStand { original, actual } => {
-                    // reps::wp_stand::undo(db, original, actual)?;
+                    // reps::wp_stand::undo(con, data, original, actual)?;
                 }
                 UndoEntry::WpWertpapier { original, actual } => {
-                    // reps::wp_wertpapier::undo(db, original, actual)?;
+                    // reps::wp_wertpapier::undo(con, data, original, actual)?;
                 }
             };
             r = true;
@@ -549,103 +549,103 @@ impl UndoRedoStack {
             //println!("e: {:?}", e);
             match e {
                 UndoEntry::AdAdresse { original, actual } => {
-                    // TODO reps::ad_adresse::redo(db, original, actual)?;
+                    // TODO reps::ad_adresse::redo(con, data, original, actual)?;
                 }
                 UndoEntry::AdPerson { original, actual } => {
-                    // reps::ad_person::redo(db, original, actual)?;
+                    // reps::ad_person::redo(con, data, original, actual)?;
                 }
                 UndoEntry::AdSitz { original, actual } => {
-                    // reps::ad_sitz::redo(db, original, actual)?;
+                    // reps::ad_sitz::redo(con, data, original, actual)?;
                 }
                 UndoEntry::Benutzer { original, actual } => {
                     reps::benutzer::redo(con, data, original, actual)?;
                 }
                 UndoEntry::ByteDaten { original, actual } => {
-                    // reps::byte_daten::redo(db, original, actual)?;
+                    // reps::byte_daten::redo(con, data, original, actual)?;
                 }
                 UndoEntry::FzBuch { original, actual } => {
-                    // reps::fz_buch::redo(db, original, actual)?;
+                    // reps::fz_buch::redo(con, data, original, actual)?;
                 }
                 UndoEntry::FzBuchautor { original, actual } => {
-                    // reps::fz_buchautor::redo(db, original, actual)?;
+                    // reps::fz_buchautor::redo(con, data, original, actual)?;
                 }
                 UndoEntry::FzBuchserie { original, actual } => {
-                    // reps::fz_buchserie::redo(db, original, actual)?;
+                    // reps::fz_buchserie::redo(con, data, original, actual)?;
                 }
                 UndoEntry::FzBuchstatus { original, actual } => {
-                    // reps::fz_buchstatus::redo(db, original, actual)?;
+                    // reps::fz_buchstatus::redo(con, data, original, actual)?;
                 }
                 UndoEntry::FzFahrrad { original, actual } => {
-                    // reps::fz_fahrrad::redo(db, original, actual)?;
+                    // reps::fz_fahrrad::redo(con, data, original, actual)?;
                 }
                 UndoEntry::FzFahrradstand { original, actual } => {
-                    // reps::fz_fahrradstand::redo(db, original, actual)?;
+                    // reps::fz_fahrradstand::redo(con, data, original, actual)?;
                 }
                 UndoEntry::FzNotiz { original, actual } => {
-                    // reps::fz_notiz::redo(db, original, actual)?;
+                    // reps::fz_notiz::redo(con, data, original, actual)?;
                 }
                 UndoEntry::HhBilanz { original, actual } => {
-                    // reps::hh_bilanz::redo(db, original, actual)?;
+                    // reps::hh_bilanz::redo(con, data, original, actual)?;
                 }
                 UndoEntry::HhBuchung { original, actual } => {
-                    // reps::hh_buchung::redo(db, original, actual)?;
+                    // reps::hh_buchung::redo(con, data, original, actual)?;
                 }
                 UndoEntry::HhEreignis { original, actual } => {
-                    // reps::hh_ereignis::redo(db, original, actual)?;
+                    // reps::hh_ereignis::redo(con, data, original, actual)?;
                 }
                 UndoEntry::HhKonto { original, actual } => {
-                    // reps::hh_konto::redo(db, original, actual)?;
+                    // reps::hh_konto::redo(con, data, original, actual)?;
                 }
                 UndoEntry::HhPeriode { original, actual } => {
-                    // reps::hh_periode::redo(db, original, actual)?;
+                    // reps::hh_periode::redo(con, data, original, actual)?;
                 }
                 UndoEntry::MaMandant { original, actual } => {
-                    // reps::ma_mandant::redo(db, original, actual)?;
+                    // reps::ma_mandant::redo(con, data, original, actual)?;
                 }
                 UndoEntry::MaParameter { original, actual } => {
-                    // reps::ma_parameter::redo(db, original, actual)?;
+                    // reps::ma_parameter::redo(con, data, original, actual)?;
                 }
                 UndoEntry::SbEreignis { original, actual } => {
-                    // reps::sb_ereignis::redo(db, original, actual)?;
+                    // reps::sb_ereignis::redo(con, data, original, actual)?;
                 }
                 UndoEntry::SbFamilie { original, actual } => {
-                    // reps::sb_familie::redo(db, original, actual)?;
+                    // reps::sb_familie::redo(con, data, original, actual)?;
                 }
                 UndoEntry::SbKind { original, actual } => {
-                    // reps::sb_kind::redo(db, original, actual)?;
+                    // reps::sb_kind::redo(con, data, original, actual)?;
                 }
                 UndoEntry::SbPerson { original, actual } => {
-                    // reps::sb_person::redo(db, original, actual)?;
+                    // reps::sb_person::redo(con, data, original, actual)?;
                 }
                 UndoEntry::SbQuelle { original, actual } => {
-                    // reps::sb_quelle::redo(db, original, actual)?;
+                    // reps::sb_quelle::redo(con, data, original, actual)?;
                 }
                 UndoEntry::SoKurse { original, actual } => {
-                    // reps::so_kurse::redo(db, original, actual)?;
+                    // reps::so_kurse::redo(con, data, original, actual)?;
                 }
                 UndoEntry::TbEintrag { original, actual } => {
-                    // reps::tb_eintrag::redo(db, original, actual)?;
+                    reps::tb_eintrag::redo(con, data, original, actual)?;
                 }
                 UndoEntry::TbEintragOrt { original, actual } => {
-                    //reps::tb_eintrag_ort::redo(db, original, actual)?;
+                    //reps::tb_eintrag_ort::redo(con, data, original, actual)?;
                 }
                 UndoEntry::TbOrt { original, actual } => {
-                    // reps::tb_ort::redo(db, original, actual)?;
+                    // reps::tb_ort::redo(con, data, original, actual)?;
                 }
                 UndoEntry::WpAnlage { original, actual } => {
-                    // reps::wp_anlage::redo(db, original, actual)?;
+                    // reps::wp_anlage::redo(con, data, original, actual)?;
                 }
                 UndoEntry::WpBuchung { original, actual } => {
-                    // reps::wp_buchung::redo(db, original, actual)?;
+                    // reps::wp_buchung::redo(con, data, original, actual)?;
                 }
                 UndoEntry::WpKonfiguration { original, actual } => {
-                    // reps::wp_konfiguration::redo(db, original, actual)?;
+                    // reps::wp_konfiguration::redo(con, data, original, actual)?;
                 }
                 UndoEntry::WpStand { original, actual } => {
-                    // reps::wp_stand::redo(db, original, actual)?;
+                    // reps::wp_stand::redo(con, data, original, actual)?;
                 }
                 UndoEntry::WpWertpapier { original, actual } => {
-                    // reps::wp_wertpapier::redo(db, original, actual)?;
+                    // reps::wp_wertpapier::redo(con, data, original, actual)?;
                 }
             };
             r = true;

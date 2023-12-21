@@ -31,7 +31,7 @@ mod tests {
                     && !a.name.starts_with("MO_")
                     && !a.name.starts_with("SO_xxx")
                     && !a.name.starts_with("VM_")
-                    && a.name == "Benutzer"
+                    && a.name == "TB_Eintrag"
             })
             .collect::<Vec<_>>();
         if self::mach_nichts() == 0 {
@@ -61,13 +61,20 @@ mod tests {
         for t in tables.iter() {
             sb.push_str(
                 format!(
-                    "use super::DbContext;
-use crate::{{config::RsbpError, services::undo::UndoEntry, Result}};
+                    "use crate::{{
+    base::{{
+        errors::Result,
+        reps::{{mach_angelegt, mach_geaendert}},
+        undo::UndoEntry,
+    }},
+    ServiceData, ServiceError,
+}};
 use chrono::{{NaiveDate, NaiveDateTime}};
-use diesel::prelude::*;
-use rsbp_rep::{{models::{}, schema::*}};
+use diesel::{{prelude::*, SqliteConnection}};
+use rep::{{models::{}, schema::{}}};
 ",
                     t.name.to_upper_camel_case(),
+                    t.name.to_uppercase(),
                 )
                 .as_str(),
             );
@@ -77,18 +84,18 @@ use rsbp_rep::{{models::{}, schema::*}};
                 format!(
                     "
 /// Undo a dataset.
-pub fn undo(db: &mut DbContext, or: &String, ac: &String) -> Result<()> {{
+pub fn undo(con: &mut SqliteConnection, data: &mut ServiceData, or: &String, ac: &String) -> Result<()> {{
     let oo = UndoEntry::from_str::<{}>(or)?;
     let oa = UndoEntry::from_str::<{}>(ac)?;
     if let (Some(o), Some(_a)) = (&oo, &oa) {{
         // Update
-        update(db, o)?;
+        update(con, data, o)?;
     }} else if let Some(a) = &oa {{
         // Insert
-        delete(db, a)?;
+        delete(con, data, a)?;
     }} else if let Some(o) = &oo {{
         // Delete
-        insert(db, o)?;
+        insert(con, data, o)?;
     }}
     Ok(())
 }}
@@ -104,18 +111,18 @@ pub fn undo(db: &mut DbContext, or: &String, ac: &String) -> Result<()> {{
                 format!(
                     "
 /// Redo a dataset.
-pub fn redo(db: &mut DbContext, or: &String, ac: &String) -> Result<()> {{
+pub fn redo(con: &mut SqliteConnection, data: &mut ServiceData, or: &String, ac: &String) -> Result<()> {{
     let oo = UndoEntry::from_str::<{}>(or)?;
     let oa = UndoEntry::from_str::<{}>(ac)?;
     if let (Some(_o), Some(a)) = (&oo, &oa) {{
         // Update
-        update(db, a)?;
+        update(con, data, a)?;
     }} else if let Some(a) = &oa {{
         // Insert
-        insert(db, a)?;
+        insert(con, data, a)?;
     }} else if let Some(o) = &oo {{
         // Delete
-        delete(db, o)?;
+        delete(con, data, o)?;
     }}
     Ok(())
 }}
@@ -189,14 +196,13 @@ pub fn redo(db: &mut DbContext, or: &String, ac: &String) -> Result<()> {{
 /// Save dataset with all values.
 #[allow(dead_code)]
 pub fn save0(
-    db: &mut DbContext,{}
+    con: &mut SqliteConnection, data: &mut ServiceData,{}
 ) -> Result<{}> {{
     let op = {}::table
         .filter({},
         )
-        .first::<{}>(db.c)
-        .optional()
-        .map_err(|source: diesel::result::Error| RsbpError::DieselError {{ source }})?;
+        .first::<{}>(con)
+        .optional()?;
     let mut p = {} {{{}
     }};
     if let Some(pu) = op {{
@@ -206,17 +212,17 @@ pub fn save0(
         p.geaendert_von = pu.geaendert_von;
         p.geaendert_am = pu.geaendert_am;
         if p.angelegt_von.is_none() || !angelegt_von_.is_none() {{
-                super::mach_angelegt(&mut p, db.daten, angelegt_von_, angelegt_am_);
+                mach_angelegt(&mut p, data, angelegt_von_, angelegt_am_);
             }}
-            super::mach_geaendert(&mut p, db.daten, geaendert_von_, geaendert_am_);
-            update(db, &p)?;
+            mach_geaendert(&mut p, data, geaendert_von_, geaendert_am_);
+            update(con, data, &p)?;
         }}
     }} else {{
-        super::mach_angelegt(&mut p, db.daten, angelegt_von_, angelegt_am_);
+        mach_angelegt(&mut p, data, angelegt_von_, angelegt_am_);
         if !geaendert_von_.is_none() {{
-            super::mach_geaendert(&mut p, db.daten, geaendert_von_, geaendert_am_);
+            mach_geaendert(&mut p, data, geaendert_von_, geaendert_am_);
         }}
-        insert(db, &p)?;
+        insert(con, data, &p)?;
     }}
     return Ok(p);
 }}
@@ -271,10 +277,10 @@ pub fn save0(
 /// Save dataset without revision columns.
 #[allow(dead_code)]
 pub fn save(
-    db: &mut DbContext,{}
+    con: &mut SqliteConnection, data: &mut ServiceData,{}
 ) -> Result<{}> {{
     save0(
-        db,{}
+        con, data,{}
     )
 }}
 ",
@@ -306,14 +312,13 @@ pub fn save(
 /// Get dataset by primary key.
 #[allow(dead_code)]
 pub fn get(
-    db: &DbContext,{}
+    con: &mut SqliteConnection,{}
 ) -> Result<Option<{}>> {{
     let p = {}::table
         .filter({},
         )
-        .first::<{}>(db.c)
-        .optional()
-        .map_err(|source: diesel::result::Error| RsbpError::DieselError {{ source }})?;
+        .first::<{}>(con)
+        .optional()?;
     Ok(p)
 }}
 ",
@@ -351,13 +356,12 @@ pub fn get(
                 format!(
                     "
 /// Get dataset by primary key.
-pub fn get2(db: &DbContext, b: &{}) -> Result<Option<{}>> {{
+pub fn get2(con: &mut SqliteConnection, b: &{}) -> Result<Option<{}>> {{
     let p = {}::table
         .filter({},
         )
-        .first::<{}>(db.c)
-        .optional()
-        .map_err(|source: diesel::result::Error| RsbpError::DieselError {{ source }})?;
+        .first::<{}>(con)
+        .optional()?;
     Ok(p)
 }}
 ",
@@ -380,10 +384,9 @@ pub fn get2(db: &DbContext, b: &{}) -> Result<Option<{}>> {{
                     "
 /// Get list.
 #[allow(dead_code)]
-pub fn get_list(db: &DbContext{}) -> Result<Vec<{}>> {{
+pub fn get_list(con: &mut SqliteConnection{}) -> Result<Vec<{}>> {{
     let list = {}::table{}
-        .load::<{}>(db.c)
-        .map_err(|source: diesel::result::Error| RsbpError::DieselError {{ source }})?;
+        .load::<{}>(con)?;
     Ok(list)
 }}
 ",
@@ -410,12 +413,12 @@ pub fn get_list(db: &DbContext{}) -> Result<Vec<{}>> {{
                 format!(
                     "
 /// Insert a dataset.
-pub fn insert<'a>(db: &mut DbContext, b: &'a {}) -> Result<&'a {}> {{
-    let rows = diesel::insert_into({}::table).values(b).execute(db.c)?;
+pub fn insert<'a>(con: &mut SqliteConnection, data: &mut ServiceData, b: &'a {}) -> Result<&'a {}> {{
+    let rows = diesel::insert_into({}::table).values(b).execute(con)?;
     if rows <= 0 {{
-        return Err(RsbpError::NotFound);
+        return Err(ServiceError::NotFound);
     }}
-    db.ul.add(&UndoEntry::{}(None, Some(b)));
+    data.ul.add(&UndoEntry::{}(None, Some(b)));
     Ok(b)
 }}
 ",
@@ -449,20 +452,20 @@ pub fn insert<'a>(db: &mut DbContext, b: &'a {}) -> Result<&'a {}> {{
                 format!(
                     "
 /// Update a dataset.
-pub fn update<'a>(db: &mut DbContext, b: &'a {}) -> Result<&'a {}> {{
-    let oo = get2(&db, b)?;
+pub fn update<'a>(con: &mut SqliteConnection, data: &mut ServiceData, b: &'a {}) -> Result<&'a {}> {{
+    let oo = get2(con, b)?;
     let rows = diesel::update(
         {}::table.filter({},
         ),
     )
     .set(({}
     ))
-    .execute(db.c)?;
+    .execute(con)?;
     if rows <= 0 || oo.is_none() {{
-        return Err(RsbpError::NotFound);
+        return Err(ServiceError::NotFound);
     }}
     if let Some(o) = oo {{
-        db.ul.add(&UndoEntry::{}(Some(&o), Some(b)));
+        data.ul.add(&UndoEntry::{}(Some(&o), Some(b)));
     }}
     Ok(b)
 }}
@@ -482,18 +485,18 @@ pub fn update<'a>(db: &mut DbContext, b: &'a {}) -> Result<&'a {}> {{
                 format!(
                     "
 /// Delete a dataset.
-pub fn delete(db: &mut DbContext, b: &{}) -> Result<()> {{
-    let oo = get2(db, b)?;
+pub fn delete(con: &mut SqliteConnection, data: &mut ServiceData, b: &{}) -> Result<()> {{
+    let oo = get2(con, b)?;
     let rows = diesel::delete(
         {}::table.filter({},
         ),
     )
-    .execute(db.c)?;
+    .execute(con)?;
     if rows <= 0 || oo.is_none() {{
-        return Err(RsbpError::NotFound);
+        return Err(ServiceError::NotFound);
     }}
     if let Some(o) = oo {{
-        db.ul.add(&UndoEntry::{}(Some(&o), None));
+        data.ul.add(&UndoEntry::{}(Some(&o), None));
     }}
     Ok(())
 }}
