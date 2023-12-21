@@ -17,7 +17,7 @@ pub fn get_service_data(
     claims: Option<Claims>,
     admin: bool,
 ) -> Result<service::ServiceData, BpError> {
-    let mut clientid: i32 = 0;
+    let mut clientid: i32 = 1;
     let mut userid: String = "unknown".to_string();
     if let Some(claims) = claims {
         clientid = claims.get_client_id();

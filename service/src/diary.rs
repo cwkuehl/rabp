@@ -10,6 +10,18 @@ use rep::{
     models_ext::TbEintragOrtExt,
 };
 
+/// Gets last diary entries.
+/// * con: Database connection.
+/// * data: Service data for database access.
+/// * returns: Diary entries or possibly errors.
+pub fn get_last_entries<'a>(
+    con: &'a mut diesel::SqliteConnection,
+    data: &'a mut ServiceData,
+) -> Result<Vec<TbEintrag>> {
+    let e = reps::tb_eintrag::get_list2(con, data.mandant_nr, 4)?;
+    Ok(e)
+}
+
 /// Gets a diary entry.
 /// * con: Database connection.
 /// * data: Service data for database access.
@@ -20,7 +32,6 @@ pub fn get_entry<'a>(
     data: &'a mut ServiceData,
     date: &NaiveDate,
 ) -> Result<Option<TbEintrag>> {
-    functions::mach_nichts();
     let e = reps::tb_eintrag::get(con, &data.mandant_nr, date)?;
     Ok(e)
 }

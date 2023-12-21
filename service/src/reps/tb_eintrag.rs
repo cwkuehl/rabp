@@ -238,3 +238,18 @@ pub fn delete(con: &mut SqliteConnection, data: &mut ServiceData, b: &TbEintrag)
     }
     Ok(())
 }
+
+/// Get list.
+#[allow(dead_code)]
+pub fn get_list2(
+    con: &mut SqliteConnection,
+    mandant_nr_: i32,
+    limit: i64,
+) -> Result<Vec<TbEintrag>> {
+    let list = TB_EINTRAG::table
+        .filter(TB_EINTRAG::mandant_nr.eq(mandant_nr_))
+        .order(TB_EINTRAG::datum.desc())
+        .limit(limit)
+        .load::<TbEintrag>(con)?;
+    Ok(list)
+}
