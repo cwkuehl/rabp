@@ -8,5 +8,9 @@ edition = "2021"
 
 [dependencies]
 chrono = { version = "*", features = ["serde"] }
+lazy_static = "1.4"
+strum = { version = "*" } # enums and strings
+strum_macros = { version = "*" }
+uuid = { version = "*", features = ["v4"] }
 
 [dev-dependencies]

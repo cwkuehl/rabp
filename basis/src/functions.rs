@@ -1,9 +1,12 @@
+use chrono::{Datelike, NaiveDate};
+use lazy_static::lazy_static;
+
 /// The function does nothing and always returns 0.
 pub fn mach_nichts() -> i32 {
     0
 }
 
-/// Convert string to i32.
+/// Converts string to i32.
 /// * s: Affected string.
 pub fn to_i32(s: &str) -> i32 {
     let x = s.parse::<i32>();
@@ -38,6 +41,96 @@ pub fn m5(s: &str, cut: bool) -> &str {
     } else {
         &s[5..]
     }
+}
+
+/// Returns a GUID.
+pub fn get_uid() -> String {
+    let guid = uuid::Uuid::new_v4();
+    guid.to_string()
+    //format!("{}", guid)
+}
+
+lazy_static! {
+    static ref MIN_YEAR: i32 = NaiveDate::MIN.year();
+    static ref MAX_YEAR: i32 = NaiveDate::MAX.year();
+}
+
+/// Gets last day of month.
+/// * year: Affected year.
+/// * month: Affected zero-based month.
+fn last_day_of_month(year: i32, month: u32) -> u32 {
+    let plus_year = ((month + 1) / 12) as i32;
+    let m = (month + 1) % 12;
+    if year > 0 && *MAX_YEAR - year - plus_year < 0 {
+        // preventing overflow
+        return NaiveDate::from_ymd_opt(*MAX_YEAR, m + 1, 1)
+            .unwrap()
+            .pred_opt()
+            .unwrap()
+            .day();
+    }
+    let year = year + plus_year;
+    if year < *MIN_YEAR {
+        return NaiveDate::from_ymd_opt(*MIN_YEAR, m + 1, 1)
+            .unwrap()
+            .pred_opt()
+            .unwrap()
+            .day();
+    }
+    let ml = NaiveDate::from_ymd_opt(year, month + 1, 1)
+        .unwrap()
+        .pred_opt()
+        .unwrap()
+        .day();
+    ml
+}
+
+/// Adds days, month and years to date.
+/// * nd: Affected date.
+/// * returns: Added date.
+pub fn nd_add_dmy(nd: &NaiveDate, days: i32, months: i32, years: i32) -> Option<NaiveDate> {
+    if let Some(d2) = NaiveDate::from_num_days_from_ce_opt(nd.num_days_from_ce() + days) {
+        let mut d = d2.day();
+        let mut m = d2.month() as i32 + months;
+        let mut y = d2.year() + years;
+        while m > 12 {
+            m -= 12;
+            y += 1;
+        }
+        while m < 1 {
+            m += 12;
+            y -= 1;
+        }
+        let ml = last_day_of_month(y, m as u32);
+        if d > ml {
+            m += 1;
+            if m > 12 {
+                y += 1;
+            }
+            d -= ml;
+        }
+        let d3 = NaiveDate::from_ymd_opt(y, m as u32, d as u32);
+        return d3;
+    }
+    None
+}
+
+/// Gets minimum of two dates.
+pub fn min_date(d1: &NaiveDate, d2: &NaiveDate) -> NaiveDate {
+    let m = match d1 < d2 {
+        true => d1,
+        _ => d2,
+    };
+    m.clone()
+}
+
+/// Gets maximum of two dates.
+pub fn max_date(d1: &NaiveDate, d2: &NaiveDate) -> NaiveDate {
+    let m = match d1 > d2 {
+        true => d1,
+        _ => d2,
+    };
+    m.clone()
 }
 
 #[cfg(test)]

@@ -31,7 +31,7 @@ mod tests {
                     && !a.name.starts_with("MO_")
                     && !a.name.starts_with("SO_xxx")
                     && !a.name.starts_with("VM_")
-                    && a.name == "TB_Eintrag"
+                    && a.name == "TB_Eintrag_Ort"
             })
             .collect::<Vec<_>>();
         if self::mach_nichts() == 0 {
@@ -522,16 +522,11 @@ pub fn delete(con: &mut SqliteConnection, data: &mut ServiceData, b: &{}) -> Res
             .join(", ");
         sb.push_str(
             format!(
-                "use super::reps::DbContext;
-use crate::{{
-    base::functions,
-    models::{{{}}},
-    services::reps,
-    Result,
-}};
-use lazy_static::lazy_static;
+                "use super::super::reps;
+use super::errors::Result;
+use crate::base::service::ServiceData;
+use rep::models::{{{}}};
 use serde::{{Deserialize, Serialize}};
-use std::sync::{{Arc, RwLock}};
 
 #[derive(Clone, Debug)]
 pub enum UndoEntry {{
@@ -584,7 +579,7 @@ impl UndoEntry {
             sb.push_str(
                 format!(
                     "    UndoEntry::{} {{ original, actual }} => {{
-        reps::{}::undo(db, original, actual)?;
+        reps::{}::undo(con, data, original, actual)?;
     }}
 ",
                     t.name.to_upper_camel_case(),
@@ -599,7 +594,7 @@ impl UndoEntry {
             sb.push_str(
                 format!(
                     "    UndoEntry::{} {{ original, actual }} => {{
-        reps::{}::redo(db, original, actual)?;
+        reps::{}::redo(con, data, original, actual)?;
     }}
 ",
                     t.name.to_upper_camel_case(),

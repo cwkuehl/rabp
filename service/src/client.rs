@@ -5,7 +5,7 @@ use basis::functions;
 use diesel::Connection;
 use rep::models::Benutzer;
 
-/// Get list with users.
+/// Gets list with users.
 /// * con: Database connection.
 /// * data: Service data for database access.
 /// * change: Should the user list be changed?
@@ -16,12 +16,12 @@ pub fn get_user_list<'a>(
     mask_password: bool,
     change: bool,
 ) -> Result<Vec<Benutzer>> {
-    let tr = con.transaction::<Vec<Benutzer>, ServiceError, _>(|e| {
+    let tr = con.transaction::<Vec<Benutzer>, ServiceError, _>(|con| {
         if functions::mach_nichts() == 0 {
             if change {
-                let ob = reps::benutzer::get(e, &data.mandant_nr, &"xxx".to_string())?;
+                let ob = reps::benutzer::get(con, &data.mandant_nr, &"xxx".to_string())?;
                 if let Some(b) = ob {
-                    reps::benutzer::delete(e, data, &b)?;
+                    reps::benutzer::delete(con, data, &b)?;
                 } else {
                     let b = Benutzer {
                         mandant_nr: data.mandant_nr,
@@ -36,10 +36,10 @@ pub fn get_user_list<'a>(
                         geaendert_von: None,
                         geaendert_am: None,
                     };
-                    reps::benutzer::insert(e, data, &b)?;
+                    reps::benutzer::insert(con, data, &b)?;
                 }
             }
-            let l = reps::benutzer::get_list(e, data.mandant_nr)?;
+            let l = reps::benutzer::get_list(con, data.mandant_nr)?;
             if mask_password {
                 // Masks passwords.
                 let mut ben = Vec::new();
@@ -62,12 +62,9 @@ pub fn get_user_list<'a>(
 /// * con: Database connection.
 /// * data: Service data for database access and UndoList.
 /// * returns: Was something changed?
-pub fn undo<'a>(
-    con: &'a mut diesel::SqliteConnection,
-    data: &'a mut ServiceData,
-) -> Result<bool> {
-    let tr = con.transaction::<bool, ServiceError, _>(|e| {
-        let r = UndoRedoStack::undo(e, data)?; // undolist)?;
+pub fn undo<'a>(con: &'a mut diesel::SqliteConnection, data: &'a mut ServiceData) -> Result<bool> {
+    let tr = con.transaction::<bool, ServiceError, _>(|con| {
+        let r = UndoRedoStack::undo(con, data)?; // undolist)?;
         Ok(r)
     });
     tr
@@ -77,13 +74,10 @@ pub fn undo<'a>(
 /// * con: Database connection.
 /// * data: Service data for database access and UndoList.
 /// * returns: Was something changed?
-pub fn redo<'a>(
-  con: &'a mut diesel::SqliteConnection,
-  data: &'a mut ServiceData,
-) -> Result<bool> {
-  let tr = con.transaction::<bool, ServiceError, _>(|e| {
-      let r = UndoRedoStack::redo(e, data)?;
-      Ok(r)
-  });
-  tr
+pub fn redo<'a>(con: &'a mut diesel::SqliteConnection, data: &'a mut ServiceData) -> Result<bool> {
+    let tr = con.transaction::<bool, ServiceError, _>(|con| {
+        let r = UndoRedoStack::redo(con, data)?;
+        Ok(r)
+    });
+    tr
 }

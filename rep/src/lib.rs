@@ -1,5 +1,5 @@
 pub mod models;
-//pub mod models_ext;
+pub mod models_ext;
 //mod res;
 mod reps;
 pub mod revision;

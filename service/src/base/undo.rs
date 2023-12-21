@@ -1,8 +1,6 @@
 use super::super::reps;
 use super::errors::Result;
 use crate::base::service::ServiceData;
-//use basis::functions;
-//use lazy_static::lazy_static;
 use rep::models::{
     AdAdresse, AdPerson, AdSitz, Benutzer, ByteDaten, FzBuch, FzBuchautor, FzBuchserie,
     FzBuchstatus, FzFahrrad, FzFahrradstand, FzNotiz, HhBilanz, HhBuchung, HhEreignis, HhKonto,
@@ -10,7 +8,6 @@ use rep::models::{
     TbEintrag, TbEintragOrt, TbOrt, WpAnlage, WpBuchung, WpKonfiguration, WpStand, WpWertpapier,
 };
 use serde::{Deserialize, Serialize};
-//use std::sync::{Arc, RwLock};
 
 #[derive(Clone, Debug)]
 #[allow(dead_code)]
@@ -498,10 +495,10 @@ impl UndoRedoStack {
                     reps::tb_eintrag::undo(con, data, original, actual)?;
                 }
                 UndoEntry::TbEintragOrt { original, actual } => {
-                    // reps::tb_eintrag_ort::undo(con, data, original, actual)?;
+                    reps::tb_eintrag_ort::undo(con, data, original, actual)?;
                 }
                 UndoEntry::TbOrt { original, actual } => {
-                    // reps::tb_ort::undo(con, data, original, actual)?;
+                    reps::tb_ort::undo(con, data, original, actual)?;
                 }
                 UndoEntry::WpAnlage { original, actual } => {
                     // reps::wp_anlage::undo(con, data, original, actual)?;
@@ -627,10 +624,10 @@ impl UndoRedoStack {
                     reps::tb_eintrag::redo(con, data, original, actual)?;
                 }
                 UndoEntry::TbEintragOrt { original, actual } => {
-                    //reps::tb_eintrag_ort::redo(con, data, original, actual)?;
+                    reps::tb_eintrag_ort::redo(con, data, original, actual)?;
                 }
                 UndoEntry::TbOrt { original, actual } => {
-                    // reps::tb_ort::redo(con, data, original, actual)?;
+                    reps::tb_ort::redo(con, data, original, actual)?;
                 }
                 UndoEntry::WpAnlage { original, actual } => {
                     // reps::wp_anlage::redo(con, data, original, actual)?;
