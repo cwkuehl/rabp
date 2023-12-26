@@ -10,7 +10,7 @@ use chrono::NaiveDateTime;
 use diesel::{prelude::*, SqliteConnection};
 use rep::{models::TbOrt, schema::TB_ORT};
 
-/// Undo a dataset.
+/// Undoes dataset.
 pub fn undo(
     con: &mut SqliteConnection,
     data: &mut ServiceData,
@@ -32,7 +32,7 @@ pub fn undo(
     Ok(())
 }
 
-/// Redo a dataset.
+/// Redoes dataset.
 pub fn redo(
     con: &mut SqliteConnection,
     data: &mut ServiceData,
@@ -54,7 +54,7 @@ pub fn redo(
     Ok(())
 }
 
-/// Save dataset with all values.
+/// Saves dataset with all values.
 #[allow(dead_code)]
 pub fn save0(
     con: &mut SqliteConnection,
@@ -116,7 +116,7 @@ pub fn save0(
     return Ok(p);
 }
 
-/// Save dataset without revision columns.
+/// Saves dataset without revision columns.
 #[allow(dead_code)]
 pub fn save(
     con: &mut SqliteConnection,
@@ -148,7 +148,7 @@ pub fn save(
     )
 }
 
-/// Get dataset by primary key.
+/// Gets dataset by primary key.
 #[allow(dead_code)]
 pub fn get(con: &mut SqliteConnection, mandant_nr_: &i32, uid_: &String) -> Result<Option<TbOrt>> {
     let p = TB_ORT::table
@@ -162,7 +162,7 @@ pub fn get(con: &mut SqliteConnection, mandant_nr_: &i32, uid_: &String) -> Resu
     Ok(p)
 }
 
-/// Get dataset by primary key.
+/// Gets dataset by primary key.
 pub fn get2(con: &mut SqliteConnection, b: &TbOrt) -> Result<Option<TbOrt>> {
     let p = TB_ORT::table
         .filter(
@@ -175,7 +175,7 @@ pub fn get2(con: &mut SqliteConnection, b: &TbOrt) -> Result<Option<TbOrt>> {
     Ok(p)
 }
 
-/// Get list.
+/// Gets list.
 #[allow(dead_code)]
 pub fn get_list(con: &mut SqliteConnection, mandant_nr_: i32) -> Result<Vec<TbOrt>> {
     let list = TB_ORT::table
@@ -184,7 +184,7 @@ pub fn get_list(con: &mut SqliteConnection, mandant_nr_: i32) -> Result<Vec<TbOr
     Ok(list)
 }
 
-/// Insert a dataset.
+/// Inserts dataset.
 pub fn insert<'a>(
     con: &mut SqliteConnection,
     data: &mut ServiceData,
@@ -198,7 +198,7 @@ pub fn insert<'a>(
     Ok(b)
 }
 
-/// Update a dataset.
+/// Updates dataset.
 pub fn update<'a>(
     con: &mut SqliteConnection,
     data: &mut ServiceData,
@@ -234,7 +234,7 @@ pub fn update<'a>(
     Ok(b)
 }
 
-/// Delete a dataset.
+/// Deletes dataset.
 pub fn delete(con: &mut SqliteConnection, data: &mut ServiceData, b: &TbOrt) -> Result<()> {
     let oo = get2(con, b)?;
     let rows = diesel::delete(

@@ -83,7 +83,7 @@ use rep::{{models::{}, schema::{}}};
             sb.push_str(
                 format!(
                     "
-/// Undo a dataset.
+/// Undoes dataset.
 pub fn undo(con: &mut SqliteConnection, data: &mut ServiceData, or: &String, ac: &String) -> Result<()> {{
     let oo = UndoEntry::from_str::<{}>(or)?;
     let oa = UndoEntry::from_str::<{}>(ac)?;
@@ -110,7 +110,7 @@ pub fn undo(con: &mut SqliteConnection, data: &mut ServiceData, or: &String, ac:
             sb.push_str(
                 format!(
                     "
-/// Redo a dataset.
+/// Redoes dataset.
 pub fn redo(con: &mut SqliteConnection, data: &mut ServiceData, or: &String, ac: &String) -> Result<()> {{
     let oo = UndoEntry::from_str::<{}>(or)?;
     let oa = UndoEntry::from_str::<{}>(ac)?;
@@ -193,7 +193,7 @@ pub fn redo(con: &mut SqliteConnection, data: &mut ServiceData, or: &String, ac:
             sb.push_str(
                 format!(
                     "
-/// Save dataset with all values.
+/// Saves dataset with all values.
 #[allow(dead_code)]
 pub fn save0(
     con: &mut SqliteConnection, data: &mut ServiceData,{}
@@ -274,7 +274,7 @@ pub fn save0(
             sb.push_str(
                 format!(
                     "
-/// Save dataset without revision columns.
+/// Saves dataset without revision columns.
 #[allow(dead_code)]
 pub fn save(
     con: &mut SqliteConnection, data: &mut ServiceData,{}
@@ -309,7 +309,7 @@ pub fn save(
             sb.push_str(
                 format!(
                     "
-/// Get dataset by primary key.
+/// Gets dataset by primary key.
 #[allow(dead_code)]
 pub fn get(
     con: &mut SqliteConnection,{}
@@ -355,7 +355,7 @@ pub fn get(
             sb.push_str(
                 format!(
                     "
-/// Get dataset by primary key.
+/// Gets dataset by primary key.
 pub fn get2(con: &mut SqliteConnection, b: &{}) -> Result<Option<{}>> {{
     let p = {}::table
         .filter({},
@@ -382,7 +382,7 @@ pub fn get2(con: &mut SqliteConnection, b: &{}) -> Result<Option<{}>> {{
             sb.push_str(
                 format!(
                     "
-/// Get list.
+/// Gets list.
 #[allow(dead_code)]
 pub fn get_list(con: &mut SqliteConnection{}) -> Result<Vec<{}>> {{
     let list = {}::table{}
@@ -412,7 +412,7 @@ pub fn get_list(con: &mut SqliteConnection{}) -> Result<Vec<{}>> {{
             sb.push_str(
                 format!(
                     "
-/// Insert a dataset.
+/// Inserts dataset.
 pub fn insert<'a>(con: &mut SqliteConnection, data: &mut ServiceData, b: &'a {}) -> Result<&'a {}> {{
     let rows = diesel::insert_into({}::table).values(b).execute(con)?;
     if rows <= 0 {{
@@ -451,7 +451,7 @@ pub fn insert<'a>(con: &mut SqliteConnection, data: &mut ServiceData, b: &'a {})
             sb.push_str(
                 format!(
                     "
-/// Update a dataset.
+/// Updates dataset.
 pub fn update<'a>(con: &mut SqliteConnection, data: &mut ServiceData, b: &'a {}) -> Result<&'a {}> {{
     let oo = get2(con, b)?;
     let rows = diesel::update(
@@ -484,7 +484,7 @@ pub fn update<'a>(con: &mut SqliteConnection, data: &mut ServiceData, b: &'a {})
             sb.push_str(
                 format!(
                     "
-/// Delete a dataset.
+/// Delets dataset.
 pub fn delete(con: &mut SqliteConnection, data: &mut ServiceData, b: &{}) -> Result<()> {{
     let oo = get2(con, b)?;
     let rows = diesel::delete(
@@ -1013,7 +1013,7 @@ impl Revision for {} {{
         0
     }
 
-    /// Convert string to i32.
+    /// Converts string to i32.
     /// * s: Affected string.
     pub fn to_i32(s: &str) -> i32 {
         let x = s.parse::<i32>();

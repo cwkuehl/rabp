@@ -11,7 +11,7 @@ use diesel::{prelude::*, SqliteConnection};
 use rep::models::Benutzer;
 use rep::schema::BENUTZER;
 
-/// Undo a dataset.
+/// Undoes dataset.
 pub fn undo(
     con: &mut SqliteConnection,
     data: &mut ServiceData,
@@ -33,7 +33,7 @@ pub fn undo(
     Ok(())
 }
 
-/// Redo a dataset.
+/// Redoes dataset.
 pub fn redo(
     con: &mut SqliteConnection,
     data: &mut ServiceData,
@@ -55,7 +55,7 @@ pub fn redo(
     Ok(())
 }
 
-/// Save dataset with all values.
+/// Saves dataset with all values.
 #[allow(dead_code)]
 pub fn save0(
     con: &mut SqliteConnection,
@@ -115,7 +115,7 @@ pub fn save0(
     return Ok(p);
 }
 
-/// Save dataset without revision columns.
+/// Saves dataset without revision columns.
 #[allow(dead_code)]
 pub fn save(
     con: &mut SqliteConnection,
@@ -145,7 +145,7 @@ pub fn save(
     )
 }
 
-/// Get dataset by primary key.
+/// Gets dataset by primary key.
 #[allow(dead_code)]
 pub fn get(
     conn: &mut SqliteConnection,
@@ -164,7 +164,7 @@ pub fn get(
     Ok(p)
 }
 
-/// Get dataset by primary key.
+/// Gets dataset by primary key.
 pub fn get2(con: &mut SqliteConnection, b: &Benutzer) -> Result<Option<Benutzer>> {
     let p = BENUTZER::table
         .filter(
@@ -177,7 +177,7 @@ pub fn get2(con: &mut SqliteConnection, b: &Benutzer) -> Result<Option<Benutzer>
     Ok(p)
 }
 
-/// Get list.
+/// Gets list.
 #[allow(dead_code)]
 pub fn get_list(con: &mut SqliteConnection, mandant_nr_: i32) -> Result<Vec<Benutzer>> {
     let list = BENUTZER::table
@@ -186,7 +186,7 @@ pub fn get_list(con: &mut SqliteConnection, mandant_nr_: i32) -> Result<Vec<Benu
     Ok(list)
 }
 
-/// Insert a dataset.
+/// Inserts dataset.
 pub fn insert<'a>(
     con: &mut SqliteConnection,
     data: &mut ServiceData,
@@ -202,7 +202,7 @@ pub fn insert<'a>(
     Ok(b)
 }
 
-/// Update a dataset.
+/// Updates dataset.
 pub fn update<'a>(
     con: &mut SqliteConnection,
     data: &mut ServiceData,
@@ -237,7 +237,7 @@ pub fn update<'a>(
     Ok(b)
 }
 
-/// Delete a dataset.
+/// Deletes dataset.
 pub fn delete(con: &mut SqliteConnection, data: &mut ServiceData, b: &Benutzer) -> Result<()> {
     let oo = get2(con, b)?;
     let rows = diesel::delete(

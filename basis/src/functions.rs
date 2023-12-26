@@ -43,7 +43,7 @@ pub fn m5(s: &str, cut: bool) -> &str {
     }
 }
 
-/// Returns a GUID.
+/// Returns GUID.
 pub fn get_uid() -> String {
     let guid = uuid::Uuid::new_v4();
     guid.to_string()

@@ -22,21 +22,77 @@ pub fn get_last_entries<'a>(
     Ok(e)
 }
 
-/// Gets a diary entry.
+/// Gets diary entry list with 1, 3, 5 or 7 entries around the given date.
 /// * con: Database connection.
 /// * data: Service data for database access.
 /// * date: Affected date.
-/// * returns: Diary entry or possibly errors.
-pub fn get_entry<'a>(
+/// * count: Affected number of entries: 1, 3, 5 or 7.
+/// * returns: Diary entries and positions or possibly errors.
+pub fn get_entries<'a>(
     con: &'a mut diesel::SqliteConnection,
     data: &'a mut ServiceData,
     date: &NaiveDate,
-) -> Result<Option<TbEintrag>> {
+    count: u32,
+) -> Result<Vec<Option<TbEintrag>>> {
+    let mut c = count;
+    if c != 1 && c != 3 && c != 5 && c != 7 {
+        c = 1;
+    }
+    let mut list = vec![];
+    if c >= 7 {
+        if let Some(d) = functions::nd_add_dmy(date, 0, 0, -1) {
+            let e = reps::tb_eintrag::get(con, &data.mandant_nr, &d)?;
+            list.push(e);
+        } else {
+            list.push(None);
+        }
+    }
+    if c >= 5 {
+        if let Some(d) = functions::nd_add_dmy(date, 0, -1, 0) {
+            let e = reps::tb_eintrag::get(con, &data.mandant_nr, &d)?;
+            list.push(e);
+        } else {
+            list.push(None);
+        }
+    }
+    if c >= 3 {
+        if let Some(d) = functions::nd_add_dmy(date, -1, 0, 0) {
+            let e = reps::tb_eintrag::get(con, &data.mandant_nr, &d)?;
+            list.push(e);
+        } else {
+            list.push(None);
+        }
+    }
     let e = reps::tb_eintrag::get(con, &data.mandant_nr, date)?;
-    Ok(e)
+    list.push(e);
+    if c >= 3 {
+        if let Some(d) = functions::nd_add_dmy(date, 1, 0, 0) {
+            let e = reps::tb_eintrag::get(con, &data.mandant_nr, &d)?;
+            list.push(e);
+        } else {
+            list.push(None);
+        }
+    }
+    if c >= 5 {
+        if let Some(d) = functions::nd_add_dmy(date, 0, 1, 0) {
+            let e = reps::tb_eintrag::get(con, &data.mandant_nr, &d)?;
+            list.push(e);
+        } else {
+            list.push(None);
+        }
+    }
+    if c >= 7 {
+        if let Some(d) = functions::nd_add_dmy(date, 0, 0, 1) {
+            let e = reps::tb_eintrag::get(con, &data.mandant_nr, &d)?;
+            list.push(e);
+        } else {
+            list.push(None);
+        }
+    }
+    Ok(list)
 }
 
-/// Gets a position list for a date.
+/// Gets position list for a date.
 /// * con: Database connection.
 /// * data: Service data for database access.
 /// * date: Affected date.
@@ -50,7 +106,7 @@ pub fn get_entry_position_list<'a>(
     Ok(Some(e))
 }
 
-/// Saves a diary entry.
+/// Saves diary entry.
 /// * con: Database connection.
 /// * data: Service data for database access.
 /// * date: Affected date.
@@ -357,7 +413,7 @@ fn optimize_positions<'a>(
     Ok(())
 }
 
-/// Deletes a position.
+/// Deletes position.
 /// * con: Database connection.
 /// * data: Service data for database access.
 /// * e: Affected Entity.
