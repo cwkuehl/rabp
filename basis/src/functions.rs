@@ -57,13 +57,13 @@ lazy_static! {
 
 /// Gets last day of month.
 /// * year: Affected year.
-/// * month: Affected zero-based month.
+/// * month: Affected one-based month.
 fn last_day_of_month(year: i32, month: u32) -> u32 {
-    let plus_year = ((month + 1) / 12) as i32;
-    let m = (month + 1) % 12;
+    let plus_year = (month / 12) as i32;
+    let m = (month % 12) + 1;
     if year > 0 && *MAX_YEAR - year - plus_year < 0 {
         // preventing overflow
-        return NaiveDate::from_ymd_opt(*MAX_YEAR, m + 1, 1)
+        return NaiveDate::from_ymd_opt(*MAX_YEAR, m, 1)
             .unwrap()
             .pred_opt()
             .unwrap()
@@ -71,13 +71,13 @@ fn last_day_of_month(year: i32, month: u32) -> u32 {
     }
     let year = year + plus_year;
     if year < *MIN_YEAR {
-        return NaiveDate::from_ymd_opt(*MIN_YEAR, m + 1, 1)
+        return NaiveDate::from_ymd_opt(*MIN_YEAR, m, 1)
             .unwrap()
             .pred_opt()
             .unwrap()
             .day();
     }
-    let ml = NaiveDate::from_ymd_opt(year, month + 1, 1)
+    let ml = NaiveDate::from_ymd_opt(year, m, 1)
         .unwrap()
         .pred_opt()
         .unwrap()
