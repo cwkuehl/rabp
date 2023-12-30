@@ -18,7 +18,7 @@ pub fn get_last_entries<'a>(
     con: &'a mut diesel::SqliteConnection,
     data: &'a mut ServiceData,
 ) -> Result<Vec<TbEintrag>> {
-    let e = reps::tb_eintrag::get_list2(con, data.mandant_nr, 2)?;
+    let e = reps::tb_eintrag::get_list2(con, data.mandant_nr, 31)?;
     Ok(e)
 }
 

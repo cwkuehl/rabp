@@ -12,13 +12,13 @@ use std::sync::Mutex;
 
 #[get("/last")]
 pub async fn last(
-    // TODO claims: Claims,
+    claims: Claims,
     pool: web::Data<DbPool>,
     undo: web::Data<Mutex<UndoPool>>,
 ) -> Result<impl Responder, BpError> {
     functions::mach_nichts();
-    // let mut data = get_service_data(Some(claims), true)?;
-    let mut data = get_service_data(None, true)?;
+    let mut data = get_service_data(Some(claims), true)?;
+    // let mut data = get_service_data(None, true)?;
     let session_id = data.get_session_id();
     let f = move || {
         // Obtaining a connection from the pool is also a potentially blocking operation.
