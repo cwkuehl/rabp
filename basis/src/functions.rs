@@ -133,6 +133,14 @@ pub fn max_date(d1: &NaiveDate, d2: &NaiveDate) -> NaiveDate {
     m.clone()
 }
 
+/// Converts date string of format YYYY-MM-DD to date.
+pub fn to_date(s: &str, default: &NaiveDate) -> NaiveDate {
+    match chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d") {
+        Ok(date) => return date,
+        _ => return default.clone(),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     // #[test]

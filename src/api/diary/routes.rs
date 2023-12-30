@@ -5,4 +5,5 @@ pub fn routes() -> Scope {
     web::scope("/diary")
         .service(handlers::last)
         .service(handlers::list)
+        .service(handlers::save)
 }

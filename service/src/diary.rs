@@ -112,6 +112,7 @@ pub fn get_entry_position_list<'a>(
 /// * date: Affected date.
 /// * entry: Affected text entry.
 /// * pos: Affected position list.
+/// * nopos: Do not save positions.
 /// * returns: Possibly errors.
 pub fn save_entry<'a>(
     con: &'a mut diesel::SqliteConnection,
@@ -119,8 +120,12 @@ pub fn save_entry<'a>(
     date: &NaiveDate,
     entry: &String,
     pos: &Vec<TbEintragOrtExt>,
+    nopos: bool,
 ) -> Result<()> {
     let e = entry.trim();
+    if e == "xxx" {
+        return Err(ServiceError::error_string("Invalid entry: xxx"));
+    }
     let empty = e.is_empty();
     let tr = con.transaction::<(), ServiceError, _>(|con| {
         let mandant_nr = data.mandant_nr;
@@ -150,171 +155,174 @@ pub fn save_entry<'a>(
             };
             reps::tb_eintrag::insert(con, data, &tb)?;
         }
-        // Saves positions.
-        // bestehende Orte lesen
-        let mut liste = reps::tb_eintrag_ort::get_list_ext(con, data, Some(date), &0, None, None)?;
-        for i in pos {
-            let puid = i.ort_uid.clone();
-            let mut from = i.datum_von;
-            let mut to = i.datum_bis;
-            if to < from {
-                to = from;
-            }
-            if *date < from || *date > to {
-                from = *date;
-                to = *date;
-            }
-            let listep = reps::tb_eintrag_ort::get_list_ext(
-                con,
-                data,
-                Some(&from),
-                &0,
-                Some(&to),
-                Some(&puid),
-            )?;
-            let ovop = listep.first();
-            if let Some(p) = liste.iter().position(|a| a.ort_uid == puid) {
-                liste.remove(p); // nicht mehr löschen
-            }
-            if listep.is_empty() || ovop.is_none() {
-                // Zeitraum leer
-                optimize_positions(con, data, &puid, &from, &to, &None, &None)?;
-            } else if let Some(vop) = ovop {
-                if listep.len() == 1 {
-                    if vop.datum_von == from && vop.datum_bis == to {
-                        functions::mach_nichts();
-                    } else if vop.datum_von <= from && vop.datum_bis >= to {
-                        if from == to {
-                            functions::mach_nichts(); // Fall: Aus Versehen gelöscht und wieder hinzugefügt.
+        if !nopos {
+            // Saves positions.
+            // bestehende Orte lesen
+            let mut liste =
+                reps::tb_eintrag_ort::get_list_ext(con, data, Some(date), &0, None, None)?;
+            for i in pos {
+                let puid = i.ort_uid.clone();
+                let mut from = i.datum_von;
+                let mut to = i.datum_bis;
+                if to < from {
+                    to = from;
+                }
+                if *date < from || *date > to {
+                    from = *date;
+                    to = *date;
+                }
+                let listep = reps::tb_eintrag_ort::get_list_ext(
+                    con,
+                    data,
+                    Some(&from),
+                    &0,
+                    Some(&to),
+                    Some(&puid),
+                )?;
+                let ovop = listep.first();
+                if let Some(p) = liste.iter().position(|a| a.ort_uid == puid) {
+                    liste.remove(p); // nicht mehr löschen
+                }
+                if listep.is_empty() || ovop.is_none() {
+                    // Zeitraum leer
+                    optimize_positions(con, data, &puid, &from, &to, &None, &None)?;
+                } else if let Some(vop) = ovop {
+                    if listep.len() == 1 {
+                        if vop.datum_von == from && vop.datum_bis == to {
+                            functions::mach_nichts();
+                        } else if vop.datum_von <= from && vop.datum_bis >= to {
+                            if from == to {
+                                functions::mach_nichts(); // Fall: Aus Versehen gelöscht und wieder hinzugefügt.
+                            } else {
+                                // Zeitraum wird verkürzt.
+                                reps::tb_eintrag_ort::save0(
+                                    con,
+                                    data,
+                                    &mandant_nr,
+                                    &puid,
+                                    &from,
+                                    &to,
+                                    &vop.angelegt_von,
+                                    &vop.angelegt_am,
+                                    &None,
+                                    &None,
+                                )?;
+                                reps::tb_eintrag_ort::delete(con, data, vop)?;
+                            }
                         } else {
-                            // Zeitraum wird verkürzt.
-                            reps::tb_eintrag_ort::save0(
-                                con,
-                                data,
-                                &mandant_nr,
-                                &puid,
-                                &from,
-                                &to,
-                                &vop.angelegt_von,
-                                &vop.angelegt_am,
-                                &None,
-                                &None,
-                            )?;
-                            reps::tb_eintrag_ort::delete(con, data, vop)?;
+                            // Nicht verkürzen.
+                            let mfrom = functions::min_date(&vop.datum_von, &from);
+                            let mto = functions::max_date(&vop.datum_bis, &to);
+                            if !(vop.datum_von == mfrom && vop.datum_bis == mto) {
+                                // Maximaler Zeitraum
+                                optimize_positions(
+                                    con,
+                                    data,
+                                    &puid,
+                                    &mfrom,
+                                    &mto,
+                                    &vop.angelegt_von,
+                                    &vop.angelegt_am,
+                                )?;
+                                reps::tb_eintrag_ort::delete(con, data, vop)?;
+                            }
                         }
                     } else {
-                        // Nicht verkürzen.
-                        let mfrom = functions::min_date(&vop.datum_von, &from);
-                        let mto = functions::max_date(&vop.datum_bis, &to);
-                        if !(vop.datum_von == mfrom && vop.datum_bis == mto) {
-                            // Maximaler Zeitraum
-                            optimize_positions(
-                                con,
-                                data,
-                                &puid,
-                                &mfrom,
-                                &mto,
-                                &vop.angelegt_von,
-                                &vop.angelegt_am,
-                            )?;
-                            reps::tb_eintrag_ort::delete(con, data, vop)?;
+                        // listep.Count >= 1
+                        let mut mfrom = from;
+                        let mut mto = to;
+                        for p in listep.iter() {
+                            if p.datum_von < mfrom {
+                                mfrom = p.datum_von;
+                            }
+                            if p.datum_bis > mto {
+                                mto = p.datum_bis;
+                            }
+                            reps::tb_eintrag_ort::delete(con, data, p)?;
                         }
+                        // Maximaler Zeitraum
+                        optimize_positions(
+                            con,
+                            data,
+                            &puid,
+                            &mfrom,
+                            &mto,
+                            &vop.angelegt_von,
+                            &vop.angelegt_am,
+                        )?;
                     }
-                } else {
-                    // listep.Count >= 1
-                    let mut mfrom = from;
-                    let mut mto = to;
-                    for p in listep.iter() {
-                        if p.datum_von < mfrom {
-                            mfrom = p.datum_von;
-                        }
-                        if p.datum_bis > mto {
-                            mto = p.datum_bis;
-                        }
-                        reps::tb_eintrag_ort::delete(con, data, p)?;
-                    }
-                    // Maximaler Zeitraum
-                    optimize_positions(
-                        con,
-                        data,
-                        &puid,
-                        &mfrom,
-                        &mto,
-                        &vop.angelegt_von,
-                        &vop.angelegt_am,
-                    )?;
                 }
             }
-        }
-        // überflüssige Orte löschen.
-        for vo in liste {
-            if vo.datum_von == vo.datum_bis {
-                reps::tb_eintrag_ort::delete(con, data, &vo)?; // Eintrag löschen
-            } else if vo.datum_von == *date {
-                // Einen Tag vorne verkürzen
-                if let Some(d) = functions::nd_add_dmy(date, 1, 0, 0) {
-                    reps::tb_eintrag_ort::save0(
-                        con,
-                        data,
-                        &mandant_nr,
-                        &vo.ort_uid,
-                        &d,
-                        &vo.datum_bis,
-                        &vo.angelegt_von,
-                        &vo.angelegt_am,
-                        &None,
-                        &None,
-                    )?;
-                    reps::tb_eintrag_ort::delete(con, data, &vo)?;
-                }
-            } else if vo.datum_bis == *date {
-                // Einen Tag hinten verkürzen
-                if let Some(d) = functions::nd_add_dmy(date, -1, 0, 0) {
-                    reps::tb_eintrag_ort::save0(
-                        con,
-                        data,
-                        &mandant_nr,
-                        &vo.ort_uid,
-                        &vo.datum_von,
-                        &d,
-                        &vo.angelegt_von,
-                        &vo.angelegt_am,
-                        &None,
-                        &None,
-                    )?;
-                    reps::tb_eintrag_ort::delete(con, data, &vo)?;
-                }
-            } else {
-                // Einen Tag herausschneiden
-                if let (Some(dp), Some(dm)) = (
-                    functions::nd_add_dmy(date, 1, 0, 0),
-                    functions::nd_add_dmy(date, -1, 0, 0),
-                ) {
-                    reps::tb_eintrag_ort::save0(
-                        con,
-                        data,
-                        &mandant_nr,
-                        &vo.ort_uid,
-                        &vo.datum_von,
-                        &dm,
-                        &vo.angelegt_von,
-                        &vo.angelegt_am,
-                        &None,
-                        &None,
-                    )?;
-                    reps::tb_eintrag_ort::save0(
-                        con,
-                        data,
-                        &mandant_nr,
-                        &vo.ort_uid,
-                        &dp,
-                        &vo.datum_bis,
-                        &vo.angelegt_von,
-                        &vo.angelegt_am,
-                        &None,
-                        &None,
-                    )?;
-                    reps::tb_eintrag_ort::delete(con, data, &vo)?;
+            // überflüssige Orte löschen.
+            for vo in liste {
+                if vo.datum_von == vo.datum_bis {
+                    reps::tb_eintrag_ort::delete(con, data, &vo)?; // Eintrag löschen
+                } else if vo.datum_von == *date {
+                    // Einen Tag vorne verkürzen
+                    if let Some(d) = functions::nd_add_dmy(date, 1, 0, 0) {
+                        reps::tb_eintrag_ort::save0(
+                            con,
+                            data,
+                            &mandant_nr,
+                            &vo.ort_uid,
+                            &d,
+                            &vo.datum_bis,
+                            &vo.angelegt_von,
+                            &vo.angelegt_am,
+                            &None,
+                            &None,
+                        )?;
+                        reps::tb_eintrag_ort::delete(con, data, &vo)?;
+                    }
+                } else if vo.datum_bis == *date {
+                    // Einen Tag hinten verkürzen
+                    if let Some(d) = functions::nd_add_dmy(date, -1, 0, 0) {
+                        reps::tb_eintrag_ort::save0(
+                            con,
+                            data,
+                            &mandant_nr,
+                            &vo.ort_uid,
+                            &vo.datum_von,
+                            &d,
+                            &vo.angelegt_von,
+                            &vo.angelegt_am,
+                            &None,
+                            &None,
+                        )?;
+                        reps::tb_eintrag_ort::delete(con, data, &vo)?;
+                    }
+                } else {
+                    // Einen Tag herausschneiden
+                    if let (Some(dp), Some(dm)) = (
+                        functions::nd_add_dmy(date, 1, 0, 0),
+                        functions::nd_add_dmy(date, -1, 0, 0),
+                    ) {
+                        reps::tb_eintrag_ort::save0(
+                            con,
+                            data,
+                            &mandant_nr,
+                            &vo.ort_uid,
+                            &vo.datum_von,
+                            &dm,
+                            &vo.angelegt_von,
+                            &vo.angelegt_am,
+                            &None,
+                            &None,
+                        )?;
+                        reps::tb_eintrag_ort::save0(
+                            con,
+                            data,
+                            &mandant_nr,
+                            &vo.ort_uid,
+                            &dp,
+                            &vo.datum_bis,
+                            &vo.angelegt_von,
+                            &vo.angelegt_am,
+                            &None,
+                            &None,
+                        )?;
+                        reps::tb_eintrag_ort::delete(con, data, &vo)?;
+                    }
                 }
             }
         }
