@@ -1,6 +1,8 @@
 #!/bin/bash
 #sudo apt install libssl-dev
 # Autostart with crontab -e
+git stash
+git pull --rebase
 cargo build -r
 # /opt/Haushalt/rabp/.env
 cp -f ~/rust/rabp/target/release/rabp /opt/Haushalt/rabp
