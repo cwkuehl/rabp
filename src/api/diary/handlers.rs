@@ -82,3 +82,55 @@ pub async fn save(
     let r = session_undo(session_id, undo, f).await?;
     Ok(HttpResponse::Ok().json(r))
 }
+
+#[get("/undo")]
+pub async fn do_undo(
+    claims: Claims,
+    pool: web::Data<DbPool>,
+    undo: web::Data<Mutex<UndoPool>>,
+) -> Result<impl Responder, BpError> {
+    let mut data = get_service_data(Some(claims), true)?;
+    let session_id = data.get_session_id();
+    let mut ul = undo.lock().map_err(|e| BpError::from(e.to_string()))?;
+    let us = (*ul)
+        .map
+        .entry(session_id.clone())
+        .or_insert(service::UndoRedoStack::new(session_id));
+    let undolist0 = us.get_last_undo();
+    data.ul.add_list(&undolist0);
+    let ul2 = web::block(move || {
+        // Obtaining a connection from the pool is also a potentially blocking operation.
+        // So, it should be called within the `web::block` closure, as well.
+        let mut con = pool.get()?;
+        service::client::undo(&mut con, &mut data)?;
+        Ok(data.ul) as Result<UndoList, BpError>
+    })
+    .await??;
+    us.remove_undo(&ul2);
+    Ok(HttpResponse::Ok())
+}
+
+#[get("/redo")]
+pub async fn do_redo(
+    claims: Claims,
+    pool: web::Data<DbPool>,
+    undo: web::Data<Mutex<UndoPool>>,
+) -> Result<impl Responder, BpError> {
+    let mut data = get_service_data(Some(claims), true)?;
+    let session_id = data.get_session_id();
+    let mut ul = undo.lock().map_err(|e| BpError::from(e.to_string()))?;
+    let us = (*ul)
+        .map
+        .entry(session_id.clone())
+        .or_insert(service::UndoRedoStack::new(session_id));
+    let undolist0 = us.get_last_redo();
+    data.ul.add_list(&undolist0);
+    let ul2 = web::block(move || {
+        let mut con = pool.get()?;
+        service::client::redo(&mut con, &mut data)?;
+        Ok(data.ul) as Result<UndoList, BpError>
+    })
+    .await??;
+    us.remove_redo(&ul2);
+    Ok(HttpResponse::Ok())
+}

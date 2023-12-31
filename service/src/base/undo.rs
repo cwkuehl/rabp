@@ -352,9 +352,9 @@ impl UndoRedoStack {
             return;
         }
         let li = self.undo.len() - 1;
-        self.trace();
+        // self.trace();
         self.undo.remove(li);
-        self.trace();
+        // self.trace();
         self.redo.push(ul.clone());
         self.trace();
     }
