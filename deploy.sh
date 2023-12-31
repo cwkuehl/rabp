@@ -18,4 +18,5 @@ cp -f ~/rust/rabp/#rabp.sh /opt/Haushalt/rabp
 # ~/hsqldb/rsbp.db
 
 # Start new instance in the background
+chmod +x \#rabp.sh
 ./#rabp.sh &
