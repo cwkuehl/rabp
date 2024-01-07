@@ -18,7 +18,7 @@ pub fn get_last_entries<'a>(
     con: &'a mut diesel::SqliteConnection,
     data: &'a mut ServiceData,
 ) -> Result<Vec<TbEintrag>> {
-    let e = reps::tb_eintrag::get_list2(con, data.mandant_nr, 31)?;
+    let e = reps::tb_eintrag::get_list2(con, data.mandant_nr, None, 31)?;
     Ok(e)
 }
 
@@ -26,19 +26,26 @@ pub fn get_last_entries<'a>(
 /// * con: Database connection.
 /// * data: Service data for database access.
 /// * date: Affected date.
-/// * count: Affected number of entries: 1, 3, 5 or 7.
+/// * count: Affected number of entries: 1, 3, 5, 7 or -1.
 /// * returns: Diary entries and positions or possibly errors.
 pub fn get_entries<'a>(
     con: &'a mut diesel::SqliteConnection,
     data: &'a mut ServiceData,
     date: &NaiveDate,
-    count: u32,
+    count: i32,
 ) -> Result<Vec<Option<TbEintrag>>> {
     let mut c = count;
-    if c != 1 && c != 3 && c != 5 && c != 7 {
+    if c != 1 && c != 3 && c != 5 && c != 7 && c != -1 {
         c = 1;
     }
     let mut list = vec![];
+    if c < 0 {
+        let l = reps::tb_eintrag::get_list2(con, data.mandant_nr, Some(date), 31)?;
+        for e in l {
+            list.push(Some(e));
+        }
+        return Ok(list);
+    }
     if c >= 7 {
         if let Some(d) = functions::nd_add_dmy(date, 0, 0, -1) {
             let e = reps::tb_eintrag::get(con, &data.mandant_nr, &d)?;

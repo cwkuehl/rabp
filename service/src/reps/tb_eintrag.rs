@@ -239,15 +239,25 @@ pub fn delete(con: &mut SqliteConnection, data: &mut ServiceData, b: &TbEintrag)
     Ok(())
 }
 
-/// Gets list.
+/// Gets list with optional date and limit.
+/// * `con` - Affected database connection.
+/// * `mandant_nr_` - Affected client number.
+/// * `date` - Date is filtered by lower equal or None.
+/// * `limit` - Limit of data rows.
 #[allow(dead_code)]
 pub fn get_list2(
     con: &mut SqliteConnection,
     mandant_nr_: i32,
+    date: Option<&NaiveDate>,
     limit: i64,
 ) -> Result<Vec<TbEintrag>> {
-    let list = TB_EINTRAG::table
-        .filter(TB_EINTRAG::mandant_nr.eq(mandant_nr_))
+    let mut q = TB_EINTRAG::table
+        .into_boxed()
+        .filter(TB_EINTRAG::mandant_nr.eq(mandant_nr_));
+    if let Some(d) = date {
+        q = q.filter(TB_EINTRAG::datum.le(d));
+    }
+    let list = q
         .order(TB_EINTRAG::datum.desc())
         .limit(limit)
         .load::<TbEintrag>(con)?;

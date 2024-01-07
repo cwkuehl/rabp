@@ -3,11 +3,11 @@ use crate::{
     base::{BpError, DbPool, UndoPool},
     extractors::Claims,
 };
-use actix_web::{get, post, web, HttpResponse, Responder, Result};
+use actix_web::{get, post, web, HttpRequest, HttpResponse, Responder, Result};
 use basis::functions;
 use rep::models::TbEintrag;
 use serde::Deserialize;
-use service::UndoList;
+use service::{ServiceError, UndoList};
 use std::sync::Mutex;
 
 #[get("/last")]
@@ -31,6 +31,39 @@ pub async fn last(
     Ok(HttpResponse::Ok().json(r))
 }
 
+#[get("/listlocal/{date}")] // date: yyyy-mm-dd;
+pub async fn list_local(
+    path: web::Path<String>,
+    pool: web::Data<DbPool>,
+    undo: web::Data<Mutex<UndoPool>>,
+    req: HttpRequest,
+) -> Result<impl Responder, BpError> {
+    if let Some(val) = req.peer_addr() {
+        let adr = val.ip().to_string();
+        println!("Request from address {:?}", adr);
+        if !adr.starts_with("127.0.0.1") {
+            return Err(ServiceError::error_string(
+                format!("Forbidden: {}", adr).as_str(),
+            ))?;
+        }
+    };
+    let date = path.into_inner();
+    let count = -1;
+    // let mut data = get_service_data(Some(claims), true)?;
+    let mut data = get_service_data(None, true)?;
+    let session_id = data.get_session_id();
+    let date = functions::to_date(&date, &data.get_today());
+    let f = move || {
+        // Obtaining a connection from the pool is also a potentially blocking operation.
+        // So, it should be called within the `web::block` closure, as well.
+        let mut con = pool.get()?;
+        let r = service::diary::get_entries(&mut con, &mut data, &date, count)?;
+        Ok((r, data.ul)) as Result<(Vec<Option<TbEintrag>>, UndoList), BpError>
+    };
+    let r = session_undo(session_id, undo, f).await?;
+    Ok(HttpResponse::Ok().json(r))
+}
+
 #[get("/list/{date}/{count}")] // date: yyyy-mm-dd; count: 1, 3, 5 or 7
 pub async fn list(
     claims: Claims,
@@ -47,7 +80,7 @@ pub async fn list(
         // Obtaining a connection from the pool is also a potentially blocking operation.
         // So, it should be called within the `web::block` closure, as well.
         let mut con = pool.get()?;
-        let r = service::diary::get_entries(&mut con, &mut data, &date, count)?;
+        let r = service::diary::get_entries(&mut con, &mut data, &date, count as i32)?;
         Ok((r, data.ul)) as Result<(Vec<Option<TbEintrag>>, UndoList), BpError>
     };
     let r = session_undo(session_id, undo, f).await?;
