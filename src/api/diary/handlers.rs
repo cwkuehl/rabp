@@ -41,7 +41,10 @@ pub async fn list_local(
     if let Some(val) = req.peer_addr() {
         let adr = val.ip().to_string();
         println!("Request from address {:?}", adr);
-        if !adr.starts_with("127.0.0.1") {
+        if !adr.starts_with("127.0.0.1")
+            && !adr.starts_with("192.168.8.128")
+            && !adr.starts_with("::1")
+        {
             return Err(ServiceError::error_string(
                 format!("Forbidden: {}", adr).as_str(),
             ))?;
