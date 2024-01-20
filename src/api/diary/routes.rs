@@ -6,6 +6,7 @@ pub fn routes() -> Scope {
         .service(handlers::last)
         .service(handlers::list)
         .service(handlers::list_local)
+        .service(handlers::delete_local)
         .service(handlers::save)
         .service(handlers::do_undo)
         .service(handlers::do_redo)

@@ -1,13 +1,13 @@
 use crate::{
-    api::{get_service_data, session_undo},
+    api::{get_service_data, is_local, session_undo},
     base::{BpError, DbPool, UndoPool},
     extractors::Claims,
 };
-use actix_web::{get, post, web, HttpRequest, HttpResponse, Responder, Result};
+use actix_web::{delete, get, post, web, HttpRequest, HttpResponse, Responder, Result};
 use basis::functions;
 use rep::models::TbEintrag;
 use serde::Deserialize;
-use service::{ServiceError, UndoList};
+use service::UndoList;
 use std::sync::Mutex;
 
 #[get("/last")]
@@ -38,18 +38,7 @@ pub async fn list_local(
     undo: web::Data<Mutex<UndoPool>>,
     req: HttpRequest,
 ) -> Result<impl Responder, BpError> {
-    if let Some(val) = req.peer_addr() {
-        let adr = val.ip().to_string();
-        println!("Request from address {:?}", adr);
-        if !adr.starts_with("127.0.0.1")
-            && !adr.starts_with("192.168.8.128")
-            && !adr.starts_with("::1")
-        {
-            return Err(ServiceError::error_string(
-                format!("Forbidden: {}", adr).as_str(),
-            ))?;
-        }
-    };
+    is_local(&req)?;
     let date = path.into_inner();
     let count = -1;
     // let mut data = get_service_data(Some(claims), true)?;
@@ -62,6 +51,31 @@ pub async fn list_local(
         let mut con = pool.get()?;
         let r = service::diary::get_entries(&mut con, &mut data, &date, count)?;
         Ok((r, data.ul)) as Result<(Vec<Option<TbEintrag>>, UndoList), BpError>
+    };
+    let r = session_undo(session_id, undo, f).await?;
+    Ok(HttpResponse::Ok().json(r))
+}
+
+/// Deletes all entries before the given date.
+#[delete("/{date}")] // date: yyyy-mm-dd;
+pub async fn delete_local(
+    path: web::Path<String>,
+    pool: web::Data<DbPool>,
+    undo: web::Data<Mutex<UndoPool>>,
+    req: HttpRequest,
+) -> Result<impl Responder, BpError> {
+    is_local(&req)?;
+    let date = path.into_inner();
+    // let mut data = get_service_data(Some(claims), true)?;
+    let mut data = get_service_data(None, true)?;
+    let session_id = data.get_session_id();
+    let date = functions::to_date(&date, &data.get_today());
+    let f = move || {
+        // Obtaining a connection from the pool is also a potentially blocking operation.
+        // So, it should be called within the `web::block` closure, as well.
+        let mut con = pool.get()?;
+        let r = service::diary::delete_entries(&mut con, &mut data, &date)?;
+        Ok((r, data.ul)) as Result<((), UndoList), BpError>
     };
     let r = session_undo(session_id, undo, f).await?;
     Ok(HttpResponse::Ok().json(r))

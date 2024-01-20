@@ -9,8 +9,8 @@ use crate::{
     base::{BpError, UndoPool},
     extractors::Claims,
 };
-use actix_web::{web, Result};
-use service::UndoList;
+use actix_web::{web, HttpRequest, Result};
+use service::{ServiceError, UndoList};
 use std::{collections::HashSet, sync::Mutex};
 
 pub fn get_service_data(
@@ -73,4 +73,21 @@ where
         }
     }
     Ok(r)
+}
+
+/// Checks if the request comes from a local address.
+pub fn is_local(req: &HttpRequest) -> Result<(), ServiceError> {
+    if let Some(val) = req.peer_addr() {
+        let adr = val.ip().to_string();
+        println!("Request from address {:?}", adr);
+        if !adr.starts_with("127.0.0.1")
+            && !adr.starts_with("192.168.8.128")
+            && !adr.starts_with("::1")
+        {
+            return Err(ServiceError::error_string(
+                format!("Forbidden: {}", adr).as_str(),
+            ));
+        }
+    };
+    Ok(())
 }

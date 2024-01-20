@@ -431,7 +431,7 @@ fn optimize_positions<'a>(
 /// Deletes position.
 /// * con: Database connection.
 /// * data: Service data for database access.
-/// * e: Affected Entity.
+/// * e: Affected entity.
 /// * returns: Possibly errors.
 pub fn delete_position<'a>(
     con: &'a mut diesel::SqliteConnection,
@@ -446,6 +446,26 @@ pub fn delete_position<'a>(
             ));
         }
         reps::tb_ort::delete(con, data, e)?;
+        Ok(())
+    });
+    tr
+}
+
+/// Deletes all entries before a given date.
+/// * con: Database connection.
+/// * data: Service data for database access.
+/// * to: Affected date.
+/// * returns: Possibly errors.
+pub fn delete_entries<'a>(
+    con: &'a mut diesel::SqliteConnection,
+    data: &'a mut ServiceData,
+    to: &NaiveDate,
+) -> Result<()> {
+    let tr = con.transaction::<(), ServiceError, _>(|con| {
+        let plist = reps::tb_eintrag::get_list2(con, data.mandant_nr, Some(to), -1)?;
+        for p in plist {
+            reps::tb_eintrag::delete(con, data, &p)?;
+        }
         Ok(())
     });
     tr
