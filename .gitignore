@@ -3,3 +3,4 @@
 macros.txt
 copypi.sh
 .env
+*.http

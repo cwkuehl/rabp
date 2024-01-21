@@ -3,7 +3,7 @@
 # Autostart with crontab -e
 
 # Kill running instance
-pkill rabp
+pkill -f rabp
 
 # Update code
 git stash
@@ -19,4 +19,4 @@ cp -f ~/rust/rabp/#rabp.sh /opt/Haushalt/rabp
 
 # Start new instance in the background
 chmod +x \#rabp.sh
-./#rabp.sh &
+nohup ./#rabp.sh >/dev/null &
