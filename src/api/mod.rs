@@ -10,13 +10,14 @@ use crate::{
     extractors::Claims,
 };
 use actix_web::{get, web, HttpRequest, HttpResponse, Responder, Result};
+use pkg_compile_time::pkg_compile_date;
 use service::{ServiceError, UndoList};
 use std::{collections::HashSet, sync::Mutex};
 
 #[get("/version")]
 pub async fn version() -> Result<impl Responder, BpError> {
     // Ok(HttpResponse::Ok().json("31.01.2024")) // returns '"31.01.2024"'
-    Ok(HttpResponse::Ok().body("31.01.2024"))
+    Ok(HttpResponse::Ok().body(pkg_compile_date!()))
 }
 
 #[get("/health")]
