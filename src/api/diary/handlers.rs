@@ -5,20 +5,10 @@ use crate::{
 };
 use actix_web::{delete, get, post, web, HttpRequest, HttpResponse, Responder, Result};
 use basis::functions;
-use pkg_compile_time::pkg_compile_date;
 use rep::models::TbEintrag;
 use serde::Deserialize;
 use service::UndoList;
 use std::sync::Mutex;
-
-#[get("/version")]
-pub async fn version(_req: HttpRequest) -> Result<impl Responder, BpError> {
-    // Ok(HttpResponse::Ok().json("31.01.2024")) // returns '"31.01.2024"'
-    // Ok(HttpResponse::Ok()
-    //       .append_header(actix_web::http::header::ContentType::plaintext())
-    //       .body(pkg_compile_date!()))
-    Ok(HttpResponse::Ok().json(pkg_compile_date!())) // returns '"2024-02-03"'
-}
 
 #[get("/last")]
 pub async fn last(
