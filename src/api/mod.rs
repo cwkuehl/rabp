@@ -15,7 +15,7 @@ use service::{ServiceError, UndoList};
 use std::{collections::HashSet, sync::Mutex};
 
 #[get("/version")]
-pub async fn version() -> Result<impl Responder, BpError> {
+pub async fn version(_req: HttpRequest) -> Result<impl Responder, BpError> {
     // Ok(HttpResponse::Ok().json("31.01.2024")) // returns '"31.01.2024"'
     // Ok(HttpResponse::Ok()
     //       .append_header(actix_web::http::header::ContentType::plaintext())
