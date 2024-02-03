@@ -9,7 +9,7 @@ use crate::{
     base::{BpError, UndoPool},
     extractors::Claims,
 };
-use actix_web::{get, http::header, web, HttpRequest, HttpResponse, Responder, Result};
+use actix_web::{get, web, HttpRequest, HttpResponse, Responder, Result};
 use pkg_compile_time::pkg_compile_date;
 use service::{ServiceError, UndoList};
 use std::{collections::HashSet, sync::Mutex};
@@ -17,9 +17,10 @@ use std::{collections::HashSet, sync::Mutex};
 #[get("/version")]
 pub async fn version() -> Result<impl Responder, BpError> {
     // Ok(HttpResponse::Ok().json("31.01.2024")) // returns '"31.01.2024"'
-    Ok(HttpResponse::Ok()
-        .append_header(header::ContentType::plaintext())
-        .body(pkg_compile_date!()))
+    // Ok(HttpResponse::Ok()
+    //       .append_header(actix_web::http::header::ContentType::plaintext())
+    //       .body(pkg_compile_date!()))
+    Ok(HttpResponse::Ok().json(pkg_compile_date!())) // returns '"31.01.2024"'
 }
 
 #[get("/health")]
