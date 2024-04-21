@@ -56,7 +56,7 @@ pub async fn list_local(
     Ok(HttpResponse::Ok().json(r))
 }
 
-/// Deletes all entries before the given date.
+/// Deletes all entries before or equal to the given date.
 #[delete("/{date}")] // date: yyyy-mm-dd;
 pub async fn delete_local(
     path: web::Path<String>,

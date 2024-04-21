@@ -10,7 +10,7 @@ use rep::{
     models_ext::TbEintragOrtExt,
 };
 
-/// Gets last diary entries.
+/// Gets last 31 diary entries.
 /// * con: Database connection.
 /// * data: Service data for database access.
 /// * returns: Diary entries or possibly errors.
