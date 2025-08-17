@@ -1,5 +1,7 @@
 # Hello World API: Actix Web + Rust Sample
 
+Note: This is the server project to ngbp.
+
 Created with ["Actix Web/Rust API: Authorization Code Sample"](https://developer.auth0.com/resources/code-samples/api/actix-web/basic-authorization).
 
 This sample uses [actix-web-httpauth][actix-web-httpauth] and [jsonwebtoken][jsonwebtoken] to implement the following security tasks:
