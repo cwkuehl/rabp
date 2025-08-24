@@ -34,13 +34,13 @@ impl Default for Auth0Config {
 
 #[derive(Debug, Display)]
 enum ClientError {
-    #[display(fmt = "authentication")]
+    #[display("authentication")]
     Authentication(actix_web_httpauth::extractors::AuthenticationError<Bearer>),
-    #[display(fmt = "decode")]
+    #[display("decode")]
     Decode(jsonwebtoken::errors::Error),
-    #[display(fmt = "not_found")]
+    #[display("not_found")]
     NotFound(String),
-    #[display(fmt = "unsupported_algorithm")]
+    #[display("unsupported_algorithm")]
     UnsupportedAlgortithm(AlgorithmParameters),
 }
 
@@ -83,7 +83,7 @@ impl ResponseError for ClientError {
 
 #[derive(Debug, Deserialize)]
 pub struct Claims {
-    pub sub: String,
+    // pub sub: String,
     permissions: Option<HashSet<String>>,
 }
 

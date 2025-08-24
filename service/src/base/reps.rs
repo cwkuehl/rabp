@@ -35,7 +35,8 @@ pub fn mach_geaendert(
         let jetzt = data.get_now();
         if let Some(d) = datum {
             // println!("Jetzt: {}  Datum: {}", jetzt, d);
-            dauer = jetzt.timestamp_millis() - d.timestamp_millis();
+            // dauer = jetzt.timestamp_millis() - d.timestamp_millis();
+            dauer = jetzt.and_utc().timestamp_millis() - d.and_utc().timestamp_millis();
         }
         if datum.is_none() || dauer > AEND_ZEIT {
             e.set_geaendert_von(&Some(data.benutzer_id.clone()));

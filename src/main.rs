@@ -8,9 +8,11 @@ use actix_web::{web, App, HttpServer};
 use basis::functions;
 use dotenv::dotenv;
 use log::{info, LevelFilter};
+// use rustls_pki_types::pem::PemObject;
+// use rustls_pki_types::{CertificateDer, PrivateKeyDer, PrivatePkcs8KeyDer};
 use std::{fs::File, io::BufReader, sync::Mutex};
 //use r2d2_sqlite::SqliteConnectionManager;
-use rustls::{Certificate, PrivateKey, ServerConfig};
+use rustls::{Certificate, PrivateKey, server::ServerConfig};
 use rustls_pemfile::{certs, pkcs8_private_keys};
 
 #[actix_web::main]
@@ -69,28 +71,38 @@ fn load_rustls_config(conf: &types::Config) -> Option<rustls::ServerConfig> {
     }
 
     // load TLS key/cert files
-    let cert_file = &mut BufReader::new(File::open(conf.tls_certs.as_str()).unwrap());
-    let key_file = &mut BufReader::new(File::open(conf.tls_key.as_str()).unwrap());
+    let cert_chain = load_certificates_from_pem(conf.tls_certs.as_str()).unwrap();
+    let keys = load_private_key_from_file(conf.tls_key.as_str()).unwrap();
 
-    // convert files to key/cert objects
-    let cert_chain = certs(cert_file)
-        .unwrap()
-        .into_iter()
-        .map(Certificate)
-        .collect();
-    let mut keys: Vec<PrivateKey> = pkcs8_private_keys(key_file)
-        .unwrap()
-        .into_iter()
-        .map(PrivateKey)
-        .collect();
+    Some(config.with_single_cert(cert_chain, keys).unwrap())
 
-    // exit if no keys could be parsed
-    if keys.is_empty() {
-        eprintln!("Could not locate PKCS 8 private keys.");
-        std::process::exit(1);
+    // rustls 0.23.31
+    // let key = PrivatePkcs8KeyDer::from_pem_file(conf.tls_key.as_str()).unwrap();
+    // let certs: Vec<_> = CertificateDer::pem_file_iter(conf.tls_certs.as_str())
+    //         .unwrap().filter_map(|c| c.ok()).collect();
+    // Some(config.with_single_cert(certs, PrivateKeyDer::Pkcs8(key)).unwrap())
+}
+
+/// Load private key with rustls-pemfile
+fn load_private_key_from_file(path: &str) -> Result<PrivateKey, Box<dyn std::error::Error>> {
+    let file = File::open(&path)?;
+    let mut reader = BufReader::new(file);
+    let mut keys: Vec<_> = pkcs8_private_keys(&mut reader)
+        .filter_map(|c| c.ok()).collect();
+    match keys.len() {
+        0 => Err(format!("No PKCS8-encoded private key found in {path}").into()),
+        1 => Ok(PrivateKey(keys.remove(0).secret_pkcs8_der().iter().map(|x| *x).collect())),
+        _ => Err(format!("More than one PKCS8-encoded private key found in {path}").into()),
     }
+}
 
-    Some(config.with_single_cert(cert_chain, keys.remove(0)).unwrap())
+/// Load certificates with rustls-pemfile
+fn load_certificates_from_pem(path: &str) -> std::io::Result<Vec<Certificate>> {
+    let file = File::open(path)?;
+    let mut reader = BufReader::new(file);
+    let certs: Vec<_> = certs(&mut reader).filter_map(|c| c.ok()).collect();
+    Ok(certs.iter().map(|a| Certificate((*a).to_vec())).collect())
+    //Ok(certs.into_iter().map(Certificate).collect())
 }
 
 #[cfg(test)]
