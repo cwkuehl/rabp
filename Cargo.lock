@@ -431,7 +431,7 @@ checksum = "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
 
 [[package]]
 name = "basis"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "chrono",
  "lazy_static",
@@ -1761,7 +1761,7 @@ checksum = "c08c74e62047bb2de4ff487b251e4a92e24f48745648451635cec7d591162d9f"
 
 [[package]]
 name = "rep"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "chrono",
  "diesel",
@@ -1955,7 +1955,7 @@ dependencies = [
 
 [[package]]
 name = "service"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "basis",
  "chrono",

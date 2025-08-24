@@ -2,13 +2,19 @@
 name = "rabp"
 version = "0.2.0"
 authors = ["Wolfgang Kuehl <wolfgang@cwkuehl.de>"]
-edition = "2021"
+edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [profile]
 dev = { opt-level = 0, debuginfo = 2, panic = "unwind" }
 release = { opt-level = 3, panic = "abort" }
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(rust_analyzer)'] }
+
+[build-dependencies]
+chrono = "0.4.41"
 
 [dependencies]
 basis = { path = "./basis" }
@@ -31,7 +37,6 @@ futures-util = "0.3.31"
 jsonwebtoken = "9.3.1"
 lazy_static = "1.5"
 log = "0.4"
-# pkg_compile_time = "0.1.3" # TODO Fehler wegen altem crate time
 r2d2 = "0.8.10"
 r2d2_sqlite = "0.31"
 rustls = "0.21.7" # "0.23.31" # enthalten in tokio-rustls

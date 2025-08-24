@@ -10,18 +10,19 @@ use crate::{
     extractors::Claims,
 };
 use actix_web::{get, web, HttpRequest, HttpResponse, Responder, Result};
-// use pkg_compile_time::pkg_compile_date;
 use service::{ServiceError, UndoList};
 use std::{collections::HashSet, sync::Mutex};
 
+#[cfg(not(rust_analyzer))]
+const BUILD_TIME: &str = include!(concat!(env!("OUT_DIR"), "/timestamp.txt"));
+
+#[cfg(rust_analyzer)]
+const BUILD_TIME: &str = "BUILD_TIME_UNAVAILABLE";
+
 #[get("/version")]
 pub async fn version(_req: HttpRequest) -> Result<impl Responder, BpError> {
-    // Ok(HttpResponse::Ok().json("31.01.2024")) // returns '"31.01.2024"'
-    // Ok(HttpResponse::Ok()
-    //       .append_header(actix_web::http::header::ContentType::plaintext())
-    //       .body(pkg_compile_date!()))
-    // TODO Ok(HttpResponse::Ok().json(pkg_compile_date!())) // returns '"31.01.2024"'
-    Ok(HttpResponse::Ok().json("23.08.2025")) // returns '"31.01.2024"'
+    // Ok(HttpResponse::Ok().json("24.08.2025"))
+    Ok(HttpResponse::Ok().json(BUILD_TIME)) // returns '"2025-08-24 17:18:59.144916399 +02:00"'
 }
 
 #[get("/health")]
